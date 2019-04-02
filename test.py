@@ -1,10 +1,11 @@
-import sampling 
-import networkx as nx 
+
 import matplotlib.pyplot as plt
+import networkx as nx 
 import numpy as np
 import json
 import time
 import os
+import sampling
 from sampling import WIS, edge_reduction, edge_reduction_old, focus_filtering, SRS2
 
 def read_json_file(filename):
@@ -85,7 +86,7 @@ def run_tests_for_files_in_folder(d, weight_attr):
             print("____________________________________________")
             data = run_tests(G, file, data, weight_attr)
 
-    save_json(data);
+    save_json(data)
  
 def run_tests_for_file(file, weight_attr):
     #subfolders = [f.path for f in os.scandir(d) if f.is_dir() ] 
@@ -94,16 +95,15 @@ def run_tests_for_file(file, weight_attr):
     if file.endswith(".json"): 
         print(file)
         G = read_json_file(file) 
-        print(nx.info(G))
-        G_ud = G.to_undirected()
-        print("is_connected", nx.is_connected(G_ud))
+        print(nx.info(G))  
+
         print("is_strongly_connected", nx.is_strongly_connected(G))
-        print("number_connected_components", nx.number_connected_components(G_ud))
+        print("number_connected_components", nx.number_weakly_connected_components(G))
         print()
         print("____________________________________________")
         data = run_tests(G, file, data, weight_attr)
 
-    save_json(data);
+    save_json(data)
 
 def save_json(data): 
     with open('tests_output_9101-1383f38c.json', 'w') as outfile:
@@ -112,17 +112,18 @@ def save_json(data):
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
     
-    edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
+    edge_percentages = [ 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
     #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
     #graph = read_json_file("real_data_small.json")
-    print(nx.info(graph))
+    
     #G_ud = graph.to_undirected()
     #print("is_connected", nx.is_connected(G_ud))
-    graph = list(nx.weakly_connected_component_subgraphs(graph))[0]
-    print(nx.info(graph))
+    #graph1 = list(nx.weakly_connected_component_subgraphs(graph))[0]
 
-    weight_attr = weight_attr
+    graph = graph.subgraph(max(nx.weakly_connected_components(graph), key=len))  
+    print(nx.info(graph))
+    #weight_attr = weight_attr
     #weight_attr = 'lastTs'
 
     print("BC")
@@ -132,7 +133,7 @@ def run_tests(graph, file_name, data, weight_attr):
     print("total_weight_BC", total_weight_2) 
     print("wcc_BC", wcc2)    
     print("in_degree_BC", in_degree2)
-    print("out_degree_BC", out_degree_SRS2)
+    print("out_degree_BC", out_degree2)
     print("average_clustering2", average_clustering2)
     print("nn2", nn2)
     print("ne2", ne2)
@@ -172,7 +173,7 @@ def run_tests(graph, file_name, data, weight_attr):
         'number_of_nodes': graph.number_of_nodes(),
         'number_of_edges': graph.number_of_edges(),
         'number_of_selfloops': graph.number_of_selfloops(),
-        'number_of_wcc': len(list(nx.weakly_connected_component_subgraphs(graph))),
+        'number_of_wcc': nx.number_weakly_connected_components(graph),
     }
     tests= {
         'edge_cuts_WIS': edge_cuts_1,
@@ -293,10 +294,10 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
     save_graph(file_name, graphs_SRS2, edge_percentages, "SRS2")
     save_graph(file_name, graphs_FF, edge_percentages, "FF")
 
-#run_tests_for_files_in_folder('test_data', 'lastTs')
+run_tests_for_files_in_folder('test_data', 'lastTs')
 
-G = read_json_file("9101-1383f38c.json") 
-run_tests_for_file("9101-1383f38c.json", "lastTs")
+#G = read_json_file("9101-1383f38c.json") 
+#run_tests_for_file("9101-1383f38c.json", "lastTs")
 
 
 #G = read_json_file("real_data_small.json") 

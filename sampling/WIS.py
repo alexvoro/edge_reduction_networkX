@@ -66,9 +66,13 @@ def WIS_reduce_test(graph, sizes, weight_attr):   # weighted
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
 def get_in_degree(G):
+    if (len(G) == 0):
+        return len(G)
     return (sum(d for n, d in G.in_degree())/float(len(G)))
 
-def get_out_degree(G):
+def get_out_degree(G): 
+    if(len(G) == 0):
+        return len(G)
     return (sum(d for n, d in G.out_degree())/float(len(G)))
     
 def WIS_test(G, edge_percentages, weight_attr='transferred'): 

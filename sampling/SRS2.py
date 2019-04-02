@@ -1,5 +1,4 @@
 import networkx as nx
-import matplotlib.pyplot as plt
 import numpy as np
 import json
 import time
@@ -47,7 +46,7 @@ def SRS2_test(G, edge_cuts, weight_attr='transferred'):
 
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
-        wcc.append(len(list(nx.weakly_connected_component_subgraphs(G_reduced)))) 
+        wcc.append(nx.number_weakly_connected_components(G_reduced)) 
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
@@ -79,7 +78,7 @@ def SRS2_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
 
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
-        wcc.append(len(list(nx.weakly_connected_component_subgraphs(G_reduced))))
+        wcc.append(nx.number_weakly_connected_components(G_reduced))
         graphs.append(G_reduced)
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc,graphs

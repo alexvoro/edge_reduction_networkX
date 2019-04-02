@@ -1,5 +1,5 @@
 
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import networkx as nx 
 import numpy as np
 import json
@@ -111,8 +111,8 @@ def save_json(data):
  
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
-    
-    edge_percentages = [ 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
+    edge_percentages = [  0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
+    #edge_percentages = [ 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
     #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
     #graph = read_json_file("real_data_small.json")
@@ -126,18 +126,18 @@ def run_tests(graph, file_name, data, weight_attr):
     #weight_attr = weight_attr
     #weight_attr = 'lastTs'
 
-    print("BC")
-    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
+    #print("BC")
+    #edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
 
-    print("edge_cuts_BC", edge_cuts_2)
-    print("total_weight_BC", total_weight_2) 
-    print("wcc_BC", wcc2)    
-    print("in_degree_BC", in_degree2)
-    print("out_degree_BC", out_degree2)
-    print("average_clustering2", average_clustering2)
-    print("nn2", nn2)
-    print("ne2", ne2)
-
+    #print("edge_cuts_BC", edge_cuts_2)
+    #print("total_weight_BC", total_weight_2) 
+    #print("wcc_BC", wcc2)    
+    #print("in_degree_BC", in_degree2)
+    #print("out_degree_BC", out_degree2)
+    #print("average_clustering2", average_clustering2)
+    #print("nn2", nn2)
+    #print("ne2", ne2)
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2 = [], [], [], [], [], [] , [], []
     print("FF")
     edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph.copy(), edge_percentages, weight_attr)
     # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
@@ -294,10 +294,12 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
     save_graph(file_name, graphs_SRS2, edge_percentages, "SRS2")
     save_graph(file_name, graphs_FF, edge_percentages, "FF")
 
-run_tests_for_files_in_folder('test_data', 'lastTs')
+#run_tests_for_files_in_folder('test_data', 'lastTs')
+#G = read_json_file("test_data/test_caveman_8_50.json") 
+#run_tests_for_file("test_data/test_caveman_8_50.json", "lastTs")
 
-#G = read_json_file("9101-1383f38c.json") 
-#run_tests_for_file("9101-1383f38c.json", "lastTs")
+G = read_json_file("9101-1383f38c.json") 
+run_tests_for_file("9101-1383f38c.json", "lastTs")
 
 
 #G = read_json_file("real_data_small.json") 

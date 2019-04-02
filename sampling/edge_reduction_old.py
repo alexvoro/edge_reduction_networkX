@@ -1,5 +1,5 @@
 import networkx as nx
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import json
 import time
 import datetime
@@ -32,14 +32,14 @@ def remove_edges(G_reduced, items, edges_max_goal):
     sorted_bet_cent_edges = sorted(items,reverse=False, key=lambda x: x[1])
     
     #print("count :", len(list(sorted_bet_cent_edges)))
-    print("sorting old took:", time.time()-current_time)
+    print("sorting old_ remove reg took:", time.time()-current_time)
     
     for bet_cent in sorted_bet_cent_edges:  
         if (G_reduced.number_of_edges() <= edges_max_goal):
             print("done :", G_reduced.number_of_edges())
             break
         if G_reduced.degree(bet_cent[0]) > 2 and G_reduced.degree(bet_cent[1]) > 2:
-            G_reduced.remove_edge(*bet_cent)  
+            G_reduced.remove_edge(bet_cent[0], bet_cent[1])  
             removed_edges.append(bet_cent)
 
     time_spent = time.time()-current_time
@@ -54,7 +54,9 @@ def postprocess(G_reduced, items):
 
     current_time = time.time()
     #print("items", items)
-    _components = (G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
+    _components = [c for c in nx.weakly_connected_components(G_reduced)]
+    print( _components )
+   # _components = list(G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
     print("number of disconnected components before postprocessing:", nx.number_weakly_connected_components(G_reduced))
    
     #print("items: ", items)
@@ -65,14 +67,14 @@ def postprocess(G_reduced, items):
             break
             
         for c in _components:
-            if c.has_node(edge[0]) and c.has_node(edge[1]):
+            if edge[0] in c and edge[1] in c :
                 # edge is within one component
                 break
-            elif c.has_node(edge[0]) or c.has_node(edge[1]): 
+            elif edge[0] in c or edge[1] in c : 
                 # edge is within one component
                 G_reduced.add_edge(*edge)
                 _components = (G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
-                break; 
+                break
      
     time_spent = time.time()-current_time
     print("remove_edges took : ", time_spent)
@@ -133,7 +135,7 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
     for edge_cut in edge_cuts:  
         current_time = time.time()
         edges_max_goal = G.number_of_edges() * edge_cut
-        G_reduced, removed_edges = remove_edges_exp(G.copy(), bet_cent_edges, edges_max_goal)
+        G_reduced, removed_edges = remove_edges(G.copy(), bet_cent_edges, edges_max_goal)
         print("weight: ", G_reduced.size())
         print("weight: ", G_reduced.size(weight=weight_attr)) 
         G_reduced = postprocess(G_reduced, removed_edges)

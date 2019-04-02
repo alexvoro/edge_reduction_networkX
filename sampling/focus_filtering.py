@@ -1,5 +1,4 @@
 import networkx as nx
-import matplotlib.pyplot as plt
 import numpy as np
 import json
 import time
@@ -146,12 +145,13 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
 
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
-        wcc.append(len(list(nx.weakly_connected_component_subgraphs(G_reduced))))
+        wcc.append(nx.number_weakly_connected_components(G_reduced))
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
 
 def run_focus_test_one(G, edge_cuts, weight_attr='transferred'): 
+    G_r = G.copy()
     total_weight = []
     in_degree = []
     out_degree = []

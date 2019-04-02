@@ -1,5 +1,5 @@
 import networkx as nx
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import json
 import time
 import datetime
@@ -7,59 +7,51 @@ import numpy as np
 from collections import OrderedDict
 from math import log10
   
-def remove_edges(G_reduced, items, edges_max_goal): 
+def remove_edges(G_reduced, items, edges_max_goal):
     current_time = time.time()
     removed_edges = []
-
-    # lowest to highest
-    sorted_edges = sorted(items,reverse=False, key=lambda x: items[x])  
-    sorted_bet_cent_edges = [(x, items[x]) for x in sorted_edges] 
-
-   # print("sorted_bet_cent_edges2 :", ordered2)
-    print("sorting took:", time.time()-current_time)
-
-    current_time = time.time()
-    for edge, bet_cent in sorted_bet_cent_edges:  
+    sorted_bet_cent_edges = sorted(items,reverse=False, key=lambda x: x[1])
+    
+    #print("count :", len(list(sorted_bet_cent_edges)))
+    print("sorting old took:", time.time()-current_time)
+    
+    for bet_cent in sorted_bet_cent_edges:  
         if (G_reduced.number_of_edges() <= edges_max_goal):
-            #print("done :", G_reduced.number_of_edges())
+            print("done :", G_reduced.number_of_edges())
             break
-        if G_reduced.degree(edge[0]) > 2 and G_reduced.degree(edge[1]) > 2:
-            G_reduced.remove_edge(*edge)  
-            #if (bet_cent != 0.0):
-            #    print(edge, bet_cent) 
-            removed_edges.append((edge, bet_cent))
-        
+        if G_reduced.degree(bet_cent[0]) > 2 and G_reduced.degree(bet_cent[1]) > 2:
+            G_reduced.remove_edge(*bet_cent)  
+            removed_edges.append(bet_cent)
+
     time_spent = time.time()-current_time
     print("for loop took : ", time_spent)
 
     return G_reduced, removed_edges
-  
+
 def postprocess(G_reduced, items):
-    current_time = time.time()
     if nx.number_weakly_connected_components(G_reduced) == 1:
         #print("****** already 1 component ")
         return G_reduced
-    #print("items", items)
-    _components = (G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
-    print("number of disconnected components before postprocessing:", len(_components))
-  
-    #for x in items:
-    #    if (x[1] != 0.0):
-    #        print(x, x[0], x[1]) 
 
-    #  highest to lowest
-    removed_sorted_edges = sorted(items,reverse=False, key=lambda x: x[1])  
-     
-    for edge, bc in removed_sorted_edges: 
-        #print(edge, bc)
-        if len(_components) == 1: 
+    current_time = time.time()
+    #print("items", items)
+    _components = [c for c in nx.weakly_connected_components(G_reduced)]
+    print( _components )
+   # _components = list(G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
+    print("number of disconnected components before postprocessing:", nx.number_weakly_connected_components(G_reduced))
+   
+    #print("items: ", items)
+    #print("reversed(items): ", reversed(items))
+    for edge in reversed(items):
+        #print(edge)
+        if nx.number_weakly_connected_components(G_reduced) == 1: 
             break
             
         for c in _components:
-            if c.has_node(edge[0]) and c.has_node(edge[1]):
+            if edge[0] in c and edge[1] in c :
                 # edge is within one component
                 break
-            elif c.has_node(edge[0]) or c.has_node(edge[1]): 
+            elif edge[0] in c or edge[1] in c : 
                 # edge is within one component
                 G_reduced.add_edge(*edge)
                 _components = (G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
@@ -68,7 +60,7 @@ def postprocess(G_reduced, items):
     time_spent = time.time()-current_time
     print("remove_edges took : ", time_spent)
     return G_reduced
-
+    
 def edge_reduce(G, edges_max_goal, weight_attr='transferred'):
     bet_cent_edges = nx.edge_betweenness_centrality(G, weight=weight_attr)
  

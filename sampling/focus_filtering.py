@@ -123,7 +123,7 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
         threshold = G_r.number_of_edges() * edge_cut
         print("edge_cut:", edge_cut)
         print("threshold:", threshold)
-        root = selectRoot(G_r, weight_attr)
+        #root = selectRoot(G_r, weight_attr)
 
         print("threshold", threshold)
         G_reduced = FBF(G_r, weight_attr, root, threshold)

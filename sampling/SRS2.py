@@ -51,8 +51,7 @@ def SRS2_test(G, edge_cuts, weight_attr='transferred'):
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
  
-def SRS2_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
-    G_r = G.copy()
+def SRS2_test_with_graphs(G, edge_cuts, weight_attr='transferred'):  
     total_weight = [] 
     in_degree = []
     out_degree = []
@@ -74,7 +73,7 @@ def SRS2_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
         running_time.append(time_spent)
-        average_clustering.append(nx.average_clustering(G_reduced.to_undirected()))
+        average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
 
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())

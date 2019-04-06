@@ -58,10 +58,10 @@ def WIS_reduce_test(graph, sizes, weight_attr):   # weighted
         
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
-        #average_clustering.append(nx.average_clustering(G_reduced.to_undirected()))
+        #average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
-        wcc.append(len(list(nx.weakly_connected_component_subgraphs(G_reduced))))
+        wcc.append(nx.number_weakly_connected_components(G_reduced))
 
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
@@ -76,8 +76,7 @@ def WIS_test(G, edge_percentages, weight_attr='transferred'):
     G_r = G.copy()
     edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = WIS_reduce_test(G_r, edge_cuts, weight_attr=weight_attr)
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
-
-
+ 
 def WIS_reduce_test_with_graphs(graph, sizes, weight_attr):   # weighted    
     #print(nx.info(graph))
     n = graph.number_of_nodes() 
@@ -128,10 +127,10 @@ def WIS_reduce_test_with_graphs(graph, sizes, weight_attr):   # weighted
         
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
-        average_clustering.append(nx.average_clustering(G_reduced.to_undirected()))
+        average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
-        wcc.append(len(list(nx.weakly_connected_component_subgraphs(G_reduced))))
+        wcc.append(nx.number_weakly_connected_components(G_reduced))
         graphs.append(G_reduced)
     
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, graphs

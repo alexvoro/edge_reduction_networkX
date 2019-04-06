@@ -71,7 +71,7 @@ def FBF(G, weight_attr, root, threshold):
     tree = nx.DiGraph() 
     tree.add_node(root)  
     
-    G_ud = G.to_undirected()
+    G_ud = G.to_undirected(as_view=True)
     edge, neighbours, top = FBF_recursive(G, G_ud, tree, weight_attr, None, root) 
     tree.add_edge(edge[0], edge[1], weight=edge[2])
     
@@ -121,13 +121,13 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
         print("weight: ", G_reduced.size(weight=weight_attr))
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
-        average_clustering.append(nx.average_clustering(G_reduced.to_undirected()))
+        average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
         #print("postprocessing took:", time.time()-current_time)  
         #print(nx.info(G_reduced))
 
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
-        wcc.append(len(list(nx.weakly_connected_component_subgraphs(G_reduced))))
+        wcc.append(nx.number_weakly_connected_components(G_reduced))
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 

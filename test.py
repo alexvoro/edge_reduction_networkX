@@ -6,7 +6,7 @@ import json
 import time
 import os
 import sampling
-from sampling import WIS, edge_reduction, edge_reduction_old, focus_filtering, SRS2
+from sampling import WIS, edge_reduction, edge_reduction_old, focus_filtering, focus_filtering_improved, SRS2
 
 def read_json_file(filename):
     with open(filename) as f:
@@ -27,63 +27,39 @@ def write_json_file(G, filename):
 
 def get_graph(filename): 
     G = read_json_file(filename)
-    print(nx.info(G))
-
-    G_ud = G.to_undirected()
-    print("is_connected", nx.is_connected(G_ud))
-    print("is_strongly_connected", nx.is_strongly_connected(G))
-    print("number_connected_components", nx.number_connected_components(G_ud))
+    print_graph_data(G)
+    G_ud = G.to_undirected(as_view=True)
 
     G_mc = list(G_ud.subgraph(c).copy() for c in nx.connected_components(G_ud))
-    # Connected components are sorted in descending order of their size
-    G_components = list(nx.connected_component_subgraphs(G_ud))
-    _components = (G_ud.subgraph(c) for c in nx.connected_components(G_ud))
+    # Connected components are sorted in descending order of their size 
 
     # todo: do for-loop to run algorithm for all components
     #G_mc = G_components[0]
     G_mc = G_ud
 
-    print("is_connected", nx.is_connected(G_mc)) 
-    print("number_connected_components", nx.number_connected_components(G_mc))
     print("dencity", nx.density(G_mc)) 
-
-    G = nx.Graph(G)
+ 
         
-    print(nx.info(G))
+    print(nx.info(G_mc))
 
 def read_files_in_folder(d = 'network_data'):
     #subfolders = [f.path for f in os.scandir(d) if f.is_dir() ] 
   
     for file in os.listdir(d):    
         if os.path.isfile(file) and file.endswith(".json"):  
-            G = read_json_file(file) 
-            print(nx.info(G))
-            G_ud = G.to_undirected()
-            print("is_connected", nx.is_connected(G_ud))
-            print("is_strongly_connected", nx.is_strongly_connected(G))
-            print("number_connected_components", nx.number_connected_components(G_ud))
-            print()
-            print("____________________________________________")
-
+            G = read_json_file(file)
+            print_graph_data(G)
 
 def run_tests_for_files_in_folder(d, weight_attr):
     #subfolders = [f.path for f in os.scandir(d) if f.is_dir() ] 
     
     data = {}
     for file in os.listdir(d):  
-        print(file)
-        print(file.endswith(".json"))
+        print(file) 
         print(os.path.isfile(file))
-        if file.endswith(".json"): 
-            print(file)
+        if file.endswith(".json"):  
             G = read_json_file(os.path.join(d, file)) 
-            print(nx.info(G))
-            G_ud = G.to_undirected()
-            print("is_connected", nx.is_connected(G_ud))
-            print("is_strongly_connected", nx.is_strongly_connected(G))
-            print("number_connected_components", nx.number_connected_components(G_ud))
-            print()
-            print("____________________________________________")
+            print_graph_data(G)
             data = run_tests(G, file, data, weight_attr)
 
     save_json(data)
@@ -95,15 +71,16 @@ def run_tests_for_file(file, weight_attr):
     if file.endswith(".json"): 
         print(file)
         G = read_json_file(file) 
-        print(nx.info(G))  
-
-        print("is_strongly_connected", nx.is_strongly_connected(G))
-        print("number_connected_components", nx.number_weakly_connected_components(G))
-        print()
-        print("____________________________________________")
+        print_graph_data(G)
         data = run_tests(G, file, data, weight_attr)
 
     save_json(data)
+def print_graph_data(G): 
+    print(nx.info(G))  
+    print("is_strongly_connected", nx.is_strongly_connected(G))
+    print("number_connected_components", nx.number_weakly_connected_components(G))
+    print()
+    print("____________________________________________")
 
 def save_json(data): 
     with open('tests_output_9101-1383f38c.json', 'w') as outfile:
@@ -111,7 +88,7 @@ def save_json(data):
  
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
-    edge_percentages = [  0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
+    edge_percentages = [0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [ 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
     #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
@@ -119,24 +96,23 @@ def run_tests(graph, file_name, data, weight_attr):
     
     #G_ud = graph.to_undirected()
     #print("is_connected", nx.is_connected(G_ud))
-    #graph1 = list(nx.weakly_connected_component_subgraphs(graph))[0]
-
+    graph = nx.relabel.convert_node_labels_to_integers(graph)
     graph = graph.subgraph(max(nx.weakly_connected_components(graph), key=len))  
     print(nx.info(graph))
     #weight_attr = weight_attr
     #weight_attr = 'lastTs'
 
     #print("BC")
-    #edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
 
-    #print("edge_cuts_BC", edge_cuts_2)
-    #print("total_weight_BC", total_weight_2) 
-    #print("wcc_BC", wcc2)    
-    #print("in_degree_BC", in_degree2)
-    #print("out_degree_BC", out_degree2)
-    #print("average_clustering2", average_clustering2)
-    #print("nn2", nn2)
-    #print("ne2", ne2)
+    print("edge_cuts_BC", edge_cuts_2)
+    print("total_weight_BC", total_weight_2) 
+    print("wcc_BC", wcc2)    
+    print("in_degree_BC", in_degree2)
+    print("out_degree_BC", out_degree2)
+    print("average_clustering2", average_clustering2)
+    print("nn2", nn2)
+    print("ne2", ne2)
     edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2 = [], [], [], [], [], [] , [], []
     print("FF")
     edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph.copy(), edge_percentages, weight_attr)
@@ -221,14 +197,15 @@ def run_tests(graph, file_name, data, weight_attr):
 def run_test_for_file(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]  
     #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
-    edge_percentages = [0.03, 0.02, 0.01] 
+    edge_percentages = [0.8, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
     
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
  
     #graph = read_json_file("real_data_small.json")
     print(nx.info(graph)) 
-    graph = list(nx.weakly_connected_component_subgraphs(graph))[0]
+    graph = nx.relabel.convert_node_labels_to_integers(graph) 
+    graph = graph.subgraph(max(nx.weakly_connected_components(graph), key=len))
     print(nx.info(graph))
  
     #weight_attr = 'lastTs'
@@ -239,7 +216,7 @@ def run_test_for_file(graph, file_name, data, weight_attr):
     #edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
 
     print("FF")
-    edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.focus_filtering.run_focus_test(graph.copy(), edge_percentages, weight_attr)
+    edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.focus_filtering_improved.run_focus_test(graph.copy(), edge_percentages, weight_attr)
     # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
  
     print("edge_cuts_FF", edge_cuts)
@@ -266,9 +243,10 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
     edge_percentages = [1, 0.8, 0.5] 
     #graph = read_json_file("real_data_small.json")
     print(nx.info(graph))
-    G_ud = graph.to_undirected()
-    print("is_connected", nx.is_connected(G_ud))
-    graph = list(nx.weakly_connected_component_subgraphs(graph))[0]
+    G_ud = graph.to_undirected(as_view=True)
+    print("is_connected", nx.is_connected(G_ud)) 
+    
+    graph = graph.subgraph(max(nx.weakly_connected_components(graph), key=len))
     print(nx.info(graph))
  
     #weight_attr = 'lastTs'
@@ -295,23 +273,48 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
     save_graph(file_name, graphs_FF, edge_percentages, "FF")
 
 #run_tests_for_files_in_folder('test_data', 'lastTs')
-#G = read_json_file("test_data/test_caveman_8_50.json") 
+
 #run_tests_for_file("test_data/test_caveman_8_50.json", "lastTs")
 
-G = read_json_file("9101-1383f38c.json") 
-run_tests_for_file("9101-1383f38c.json", "lastTs")
+#G = nx.relaxed_caveman_graph(10, 4000, 0.1, seed=42)
+#print(nx.info(G))
 
 
+#G = read_json_file("9101-1383f38c.json") 
+#nx.write_graphml_lxml(G, "9037-12bbf821.graphml")
+#run_tests_for_file("9037-12bbf821.json", "lastTs")
+
+
+#G = read_json_file("test_data/test_caveman_8_50.json") 
+#run_test_for_file(G, "test_data/test_caveman_8_50.json", {}, "lastTs") 
+
+#G = read_json_file("9037-12bbf821.json") 
+#run_test_for_file(G, "9037-12bbf821.json", {}, "lastTs") 
+
+#nx.write_graphml_lxml(G, "test_caveman_8_50.graphml")
 #G = read_json_file("real_data_small.json") 
 #run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
 #G = read_json_file("test_data/test_caveman_8_50.json") 
 #run_test_for_file(G, "test_caveman_8_50.json", {}, "lastTs") 
 
-#G = read_json_file("real_data_small.json") 
-#run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
 #G = read_json_file("test_data/test_caveman_2_5.json") 
+#run_test_for_file(G, "test_data/test_caveman_2_5.json", {}, "lastTs")  
+#G = nx.relabel.convert_node_labels_to_integers(G)
+#run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
+
+G = read_json_file("real_data_small.json") 
+#G = nx.relabel.convert_node_labels_to_integers(G)
+run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
+
+#G = read_json_file("9101-1383f38c.json")  
+#nx.write_graphml_lxml(G, "9101-1383f38c.graphml")
+
+#G = read_json_file("test_data/test_caveman_2_5.json") 
+#run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
+#G = read_json_file("test_data/test_caveman_2_5.json") 
+#run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
 #run_test_for_file_save_graph(G, "test_caveman_2_5.json", {}, "lastTs") 
 
 #G = read_json_file("test_data/test_caveman_2_5.json") 

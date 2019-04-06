@@ -28,6 +28,40 @@ def remove_edges(G_reduced, items, edges_max_goal):
 
     return G_reduced, removed_edges
 
+def postprocess_edge_b (G_reduced, items):
+    if nx.number_weakly_connected_components(G_reduced) == 1:
+        #print("****** already 1 component ")
+        return G_reduced
+
+    current_time = time.time() 
+    _components = [c for c in nx.weakly_connected_components(G_reduced)]
+    print( _components )
+   # _components = list(G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
+    print("number of disconnected components before postprocessing:", nx.number_weakly_connected_components(G_reduced))
+    
+
+    #print("items: ", items)
+    #print("reversed(items): ", reversed(items))
+    for edge in reversed(items):
+        #print(edge)
+        if nx.number_weakly_connected_components(G_reduced) == 1: 
+            break
+            
+        for c in _components:
+            if edge[0] in c and edge[1] in c :
+                # edge is within one component
+                break
+            elif edge[0] in c or edge[1] in c : 
+                # edge is within one component
+                G_reduced.add_edge(*edge)
+                _components = (G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
+                break
+     
+    time_spent = time.time()-current_time
+    print("remove_edges took : ", time_spent)
+    return G_reduced
+
+
 def postprocess(G_reduced, items):
     if nx.number_weakly_connected_components(G_reduced) == 1:
         #print("****** already 1 component ")

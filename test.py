@@ -115,7 +115,7 @@ def run_tests(graph, file_name, data, weight_attr):
     print("ne2", ne2)
     edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2 = [], [], [], [], [], [] , [], []
     print("FF")
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph.copy(), edge_percentages, weight_attr)
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph, edge_percentages, weight_attr)
     # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
  
     print("edge_cuts_FF", edge_cuts_3)
@@ -210,13 +210,13 @@ def run_test_for_file(graph, file_name, data, weight_attr):
  
     #weight_attr = 'lastTs'
   
-    #print("BC")
+    print("BC")
     #edge_cuts, total_weight, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc  = sampling.edge_reduction.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
 
     #edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
 
     print("FF")
-    edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.focus_filtering_improved.run_focus_test(graph.copy(), edge_percentages, weight_attr)
+    edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.focus_filtering_improved.run_focus_test(graph, edge_percentages, weight_attr)
     # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
  
     print("edge_cuts_FF", edge_cuts)
@@ -261,7 +261,7 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
     
     #graph = sampling.edge_reduction.edge_reduce_approximate(graph.copy(), 0.5, weight_attr)
     #print("FF")
-    #edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph.copy(), edge_percentages, weight_attr)
+    #edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph, edge_percentages, weight_attr)
     # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
  
     #print("edge_cuts_FF", edge_cuts)
@@ -304,15 +304,15 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
 #G = nx.relabel.convert_node_labels_to_integers(G)
 #run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
-G = read_json_file("real_data_small.json") 
+#G = read_json_file("real_data_small.json") 
 #G = nx.relabel.convert_node_labels_to_integers(G)
-run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
+#run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
 #G = read_json_file("9101-1383f38c.json")  
 #nx.write_graphml_lxml(G, "9101-1383f38c.graphml")
 
-#G = read_json_file("test_data/test_caveman_2_5.json") 
-#run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
+G = read_json_file("test_data/test_caveman_2_5.json") 
+run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
 #G = read_json_file("test_data/test_caveman_2_5.json") 
 #run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
 #run_test_for_file_save_graph(G, "test_caveman_2_5.json", {}, "lastTs") 

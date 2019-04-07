@@ -59,6 +59,7 @@ def FBF_recursive(G, tree, weight_attr, neighbours = None, lastAdded = None):
     other_end = sorted(vn_weight, reverse=True, key=lambda x: x[1])[:1][0] 
     
     edge = [e for e in edges if e[0] == other_end[0] or e[1] == other_end[0]][0]
+    
     #print(edge)
     return edge, neighbours, top[0] 
 

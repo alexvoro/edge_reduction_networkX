@@ -151,11 +151,14 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
     wcc = []
 
     for edge_cut in edge_cuts:  
+        graph_copy = G.copy()
+        print("original:", graph_copy.number_of_edges())
+
         current_time = time.time()
         edges_max_goal = G.number_of_edges() * edge_cut
         print("edge_cut:", edge_cut)
         print("edges_max_goal:", edges_max_goal)
-        G_reduced, removed_edges = remove_edges(G.copy(), bet_cent_edges, edges_max_goal)
+        G_reduced, removed_edges = remove_edges(graph_copy, bet_cent_edges, edges_max_goal)
         print("weight: ", G_reduced.size())
         print("weight: ", G_reduced.size(weight=weight_attr)) 
         G_reduced = postprocess(G_reduced, removed_edges)

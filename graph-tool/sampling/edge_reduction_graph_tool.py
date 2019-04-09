@@ -66,7 +66,7 @@ def remove_edges(G_reduced, items, edges_max_goal):
  
 
 def edge_reduce(G, edges_max_goal, weight_attr): 
-    cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=None, norm=True)
+    cent = graph_tool.centrality.betweenness(G, pivots=None, vprop=None, eprop=None, weight=None, norm=True)
     bet_cent_edges = cent[1]
     G_reduced, removed_edges = remove_edges(graph, bet_cent_edges, edges_max_goal)
     G_reduced = postprocess(G_reduced, removed_edges)
@@ -80,6 +80,7 @@ def edge_reduce_approximate(G, edges_max_goal, weight_attr):
 
     cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=edge_weight, norm=True)
     bet_cent_edges = cent[1]
+    graph = Graph(G)
     G_reduced, removed_edges = remove_edges(graph, bet_cent_edges, edges_max_goal)
     G_reduced = postprocess(G_reduced, removed_edges)
     return G_reduced

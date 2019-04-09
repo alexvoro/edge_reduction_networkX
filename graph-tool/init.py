@@ -75,8 +75,16 @@ weight_attr = "lastTs"
 #run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #print(g.get_edges())
 
-g = load_g("9101-1383f38c.graphml")
-run_tests(g, "9101-1383f38c.graphml", {}, weight_attr)
+#g = load_g("9101-1383f38c.graphml")
+#run_tests(g, "9101-1383f38c.graphml", {}, weight_attr)
+
+#g = load_g("9101-12bbf821.graphml")
+#run_tests(g, "9101-12bbf821.graphml", {}, weight_attr)
+
+g = load_g("small.graphml")
+run_tests(g, "small.graphml", {}, weight_attr)
+g = load_g("huge.graphml")
+run_tests(g, "hug.graphml", {}, weight_attr)
 
 def load_test_graph(): 
     # We want also to keep the age information for each vertex and edge. For that

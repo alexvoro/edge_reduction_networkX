@@ -6,7 +6,7 @@ import json
 import time
 import os
 import sampling
-from sampling import WIS, edge_reduction, edge_reduction_old, focus_filtering, focus_filtering_improved, SRS2
+from sampling import WIS, extensions, edge_reduction, edge_reduction_old, focus_filtering, focus_filtering_improved, SRS2
 
 def read_json_file(filename):
     with open(filename) as f:
@@ -15,7 +15,6 @@ def read_json_file(filename):
               key='guid', link='links')
     #return nx.readwrite.node_link_graph(js_graph, {'link': 'links', 'source': 'sender', 'target': 'receiver', 'key': 'guid'})
     return nx.readwrite.node_link_graph(js_graph, directed=True, multigraph=False, attrs={'link': 'links', 'source': 'sender', 'target': 'receiver', 'key': 'guid', 'name': 'guid'} )
- 
 
 def write_json_file(G, filename):
     _attrs = dict(source='sender', target='receiver', name='guid',
@@ -24,24 +23,7 @@ def write_json_file(G, filename):
  
     with open(filename, 'w') as outfile:
         json.dump(s2, outfile)
-
-def get_graph(filename): 
-    G = read_json_file(filename)
-    print_graph_data(G)
-    G_ud = G.to_undirected(as_view=True)
-
-    G_mc = list(G_ud.subgraph(c).copy() for c in nx.connected_components(G_ud))
-    # Connected components are sorted in descending order of their size 
-
-    # todo: do for-loop to run algorithm for all components
-    #G_mc = G_components[0]
-    G_mc = G_ud
-
-    print("dencity", nx.density(G_mc)) 
  
-        
-    print(nx.info(G_mc))
-
 def read_files_in_folder(d = 'network_data'):
     #subfolders = [f.path for f in os.scandir(d) if f.is_dir() ] 
   
@@ -88,23 +70,26 @@ def save_json(data):
  
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
-    edge_percentages = [0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
+    #edge_percentages = [0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [ 1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1]
-    #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
+    edge_percentages = [ 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
     #graph = read_json_file("real_data_small.json")
-    
+    tt = extensions.weakly_connected_components(graph)
+    n = extensions.number_weakly_connected_components(graph)
+ 
     #G_ud = graph.to_undirected()
     #print("is_connected", nx.is_connected(G_ud))
-    graph = nx.relabel.convert_node_labels_to_integers(graph)
+    #graph = nx.relabel.convert_node_labels_to_integers(graph)
     graph = graph.subgraph(max(nx.weakly_connected_components(graph), key=len))  
     print(nx.info(graph))
     #weight_attr = weight_attr
     #weight_attr = 'lastTs'
 
-    #print("BC")
-    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
-
+    print("BC")
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2  = sampling.edge_reduction_old.edge_reduce_approximate_test(file_name, graph.copy(), edge_percentages, weight_attr)
+    #edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2 = [], [], [], [], [], [] , [], []
+     
     print("edge_cuts_BC", edge_cuts_2)
     print("total_weight_BC", total_weight_2) 
     print("wcc_BC", wcc2)    
@@ -113,17 +98,9 @@ def run_tests(graph, file_name, data, weight_attr):
     print("average_clustering2", average_clustering2)
     print("nn2", nn2)
     print("ne2", ne2)
-    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2 = [], [], [], [], [], [] , [], []
-    print("FF")
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering.run_focus_test(graph, edge_percentages, weight_attr)
-    # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
- 
-    print("edge_cuts_FF", edge_cuts_3)
-    print("total_weight_FF", total_weight_3) 
-    print("wcc_FF", wcc3)   
-
+    
     print("WIS")
-    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS.WIS_test(graph.copy(), edge_percentages, weight_attr)
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS.WIS_test(file_name, graph.copy(), edge_percentages, weight_attr)
     print("edge_cuts_WIS", edge_cuts_1)
     print("total_weight_WIS", total_weight_1) 
     print("wcc_WIS", wcc1)    
@@ -133,8 +110,17 @@ def run_tests(graph, file_name, data, weight_attr):
     print("nn1", nn1)
     print("ne1", ne1)
 
+    print("FF")
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering_improved.run_focus_test(graph, edge_percentages, weight_attr)
+    # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
+ 
+    print("edge_cuts_FF", edge_cuts_3)
+    print("total_weight_FF", total_weight_3) 
+    print("wcc_FF", wcc3)   
+
+
     print("SRS2")
-    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4 = sampling.SRS2.SRS2_test(graph.copy(), edge_percentages, weight_attr)
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4 = sampling.SRS2.SRS2_test(file_name, graph.copy(), edge_percentages, weight_attr)
     print("edge_cuts_SRS2", edge_cuts_4)
     print("total_weight_SRS2", total_weight_4) 
     print("wcc_SRS2", wcc4)   
@@ -144,13 +130,13 @@ def run_tests(graph, file_name, data, weight_attr):
     print("nn_SRS2", nn4)
     print("ne_SRS2", ne4)
 
-
     graph = {
         'number_of_nodes': graph.number_of_nodes(),
         'number_of_edges': graph.number_of_edges(),
         'number_of_selfloops': graph.number_of_selfloops(),
         'number_of_wcc': nx.number_weakly_connected_components(graph),
     }
+
     tests= {
         'edge_cuts_WIS': edge_cuts_1,
         'total_weight_WIS': total_weight_1,
@@ -192,17 +178,31 @@ def run_tests(graph, file_name, data, weight_attr):
     } 
 
     return data
-
-
+ 
 def run_test_for_file(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]  
     #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
-    edge_percentages = [0.8, 0.03, 0.02, 0.01] 
+    edge_percentages = [0.4, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
     
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
  
     #graph = read_json_file("real_data_small.json")
+
+    print("BC")
+    edge_cuts, total_weight, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc  = sampling.edge_reduction.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
+
+    print("WIS")
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS.WIS_test(file_name, graph.copy(), edge_percentages, weight_attr)
+    print("edge_cuts_WIS", edge_cuts_1)
+    print("total_weight_WIS", total_weight_1) 
+    print("wcc_WIS", wcc1)    
+    print("in_degree_WIS", in_degree1)
+    print("out_degree_WIS", out_degree1)
+    print("average_clustering1", average_clustering1)
+    print("nn1", nn1)
+    print("ne1", ne1)
+
     print(nx.info(graph)) 
     graph = nx.relabel.convert_node_labels_to_integers(graph) 
     graph = graph.subgraph(max(nx.weakly_connected_components(graph), key=len))
@@ -210,9 +210,6 @@ def run_test_for_file(graph, file_name, data, weight_attr):
  
     #weight_attr = 'lastTs'
   
-    print("BC")
-    #edge_cuts, total_weight, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc  = sampling.edge_reduction.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
-
     #edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.edge_reduction_old.edge_reduce_approximate_test(graph.copy(), edge_percentages, weight_attr)
 
     print("FF")
@@ -286,13 +283,19 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
 
 
 #G = read_json_file("test_data/test_caveman_8_50.json") 
-#run_test_for_file(G, "test_data/test_caveman_8_50.json", {}, "lastTs") 
+#run_tests_for_file("test_data/test_caveman_8_50.json", "lastTs") 
+
+#G = read_json_file("9037-12bbf821.json") 
+#run_tests_for_file("9037-12bbf821.json", "lastTs") 
+run_tests_for_file("9101-1383f38c.json", "lastTs") 
+#run_tests_for_file("test_data/test_caveman_8_50.json", "lastTs") 
 
 #G = read_json_file("9037-12bbf821.json") 
 #run_test_for_file(G, "9037-12bbf821.json", {}, "lastTs") 
 
 #nx.write_graphml_lxml(G, "test_caveman_8_50.graphml")
 #G = read_json_file("real_data_small.json") 
+#run_tests_for_file("real_data_small.json", "lastTs")
 #run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
 #G = read_json_file("test_data/test_caveman_8_50.json") 
@@ -302,17 +305,17 @@ def run_test_for_file_save_graph(graph, file_name, data, weight_attr):
 #G = read_json_file("test_data/test_caveman_2_5.json") 
 #run_test_for_file(G, "test_data/test_caveman_2_5.json", {}, "lastTs")  
 #G = nx.relabel.convert_node_labels_to_integers(G)
+#G = read_json_file("real_data_small.json") 
 #run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
-#G = read_json_file("real_data_small.json") 
 #G = nx.relabel.convert_node_labels_to_integers(G)
 #run_test_for_file(G, "real_data_small.json", {}, "lastTs") 
 
 #G = read_json_file("9101-1383f38c.json")  
 #nx.write_graphml_lxml(G, "9101-1383f38c.graphml")
 
-G = read_json_file("test_data/test_caveman_2_5.json") 
-run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
+#G = read_json_file("test_data/test_caveman_2_5.json") 
+#run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
 #G = read_json_file("test_data/test_caveman_2_5.json") 
 #run_test_for_file(G, "test_caveman_2_5.json", {}, "lastTs") 
 #run_test_for_file_save_graph(G, "test_caveman_2_5.json", {}, "lastTs") 

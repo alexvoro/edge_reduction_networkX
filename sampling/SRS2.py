@@ -7,6 +7,19 @@ import random
 import bisect
 import itertools
 
+def read_json(filename):
+    with open(filename) as f:
+        js_graph = json.load(f) #, default={'sender': 'source'})
+        _attrs = dict(source='sender', target='receiver', name='guid',
+              key='guid', link='links')
+    #return nx.readwrite.node_link_graph(js_graph, {'link': 'links', 'source': 'sender', 'target': 'receiver', 'key': 'guid'})
+    return nx.readwrite.node_link_graph(js_graph, directed=True, multigraph=False, attrs={'link': 'links', 'source': 'sender', 'target': 'receiver', 'key': 'guid', 'name': 'guid'} )
+ 
+def read_json_file(filename):
+    graph = read_json(filename)
+    return graph.subgraph(max(nx.weakly_connected_components(graph), key=len))  
+
+
 def SRS2(graph, weight_attr, cut_size): 
     sorted_edges_by_weight = sorted(graph.edges.data(weight_attr),reverse=True, key=lambda x: x[2])
  
@@ -20,7 +33,7 @@ def get_in_degree(G):
 def get_out_degree(G):
     return (sum(d for n, d in G.out_degree())/float(len(G)))
 
-def SRS2_test(G, edge_cuts, weight_attr='transferred'):
+def SRS2_test(filename, G, edge_cuts, weight_attr='transferred'):
     #G_r = G.copy()
     total_weight = [] 
     in_degree = []
@@ -51,7 +64,7 @@ def SRS2_test(G, edge_cuts, weight_attr='transferred'):
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
  
-def SRS2_test_with_graphs(G, edge_cuts, weight_attr='transferred'):  
+def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):  
     total_weight = [] 
     in_degree = []
     out_degree = []
@@ -66,7 +79,16 @@ def SRS2_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
         edges_max_goal = G.number_of_edges() * edge_cut 
         
         current_time = time.time()
-        G_reduced = SRS2(G.copy(), weight_attr, edges_max_goal)
+        #graph = read_json_file(filename)
+
+        graph = nx.DiGraph(G)
+        print("original:", graph)
+        print("is_frozen: ",nx.is_frozen(graph))
+        #if (nx.is_frozen(graph)):
+        #    graph = nx.DiGraph(graph) 
+        G_reduced = SRS2(graph, weight_attr, edges_max_goal)
+        graph.clear()
+
         time_spent = time.time()-current_time
         
         total_weight.append(G_reduced.size(weight=weight_attr)) 

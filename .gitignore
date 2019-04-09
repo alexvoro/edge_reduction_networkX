@@ -1,2 +1,4 @@
 __pycache__/
-9101-1383f38c.json
+*.json
+*.graphml
+*.pyc

@@ -9,7 +9,7 @@ from matplotlib.pyplot import *
 from numpy.random import *  
 seed(42)
 import sampling
-from sampling import WIS_graph_tool, edge_reduction_graph_tool, extensions
+from sampling import WIS_graph_tool, edge_reduction_graph_tool, extensions, focus_filtering_graph_tool, SRS2_graph_tool
  
 # let's construct a Price network (the one that existed before Barabasi). It is
 # a directed network, with preferential attachment. The algorithm below is
@@ -46,7 +46,7 @@ def load_g(file_name):
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.7, 0.4]
     edge_percentages = [0.05]
-    run_FF(edge_percentages, graph, file_name, {}, weight_attr)
+    #run_FF(edge_percentages, graph, file_name, {}, weight_attr)
     run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     run_BC(edge_percentages, graph, file_name, {}, weight_attr)
     #run_WIS(edge_percentages, graph, file_name, {}, weight_attr)

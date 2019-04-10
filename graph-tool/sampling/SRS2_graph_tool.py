@@ -1,5 +1,4 @@
-from graph_tool.all import *  
-import networkx as nx
+from graph_tool.all import * 
 import numpy as np
 import json
 import time
@@ -45,7 +44,7 @@ def SRS2(G_reduced, e_delete, weight_attr, cut_size):
     edges_to_remove = list(sorted_edges_by_weight)[int(cut_size):] 
 
     for edge in edges_to_remove:
-        e_delete[edge] = False 
+        e_delete[edge[0]] = False 
 
     G_reduced.set_edge_filter(e_delete) 
     return G_reduced
@@ -88,7 +87,7 @@ def SRS2_test(filename, G, edge_cuts, weight_attr):
     running_time = [] 
 
     for edge_cut in edge_cuts:  
-        edges_max_goal = G.number_of_edges() * edge_cut 
+        edges_max_goal = G.num_edges() * edge_cut 
         
         current_time = time.time() 
         G_reduced = run_SRS2_test(G, edges_max_goal, weight_attr) 
@@ -112,7 +111,7 @@ def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):
     graphs = []
 
     for edge_cut in edge_cuts:  
-        edges_max_goal = G.number_of_edges() * edge_cut 
+        edges_max_goal = G.num_edges() * edge_cut 
         
         current_time = time.time() 
         G_reduced = run_SRS2_test(G, edges_max_goal, weight_attr) 

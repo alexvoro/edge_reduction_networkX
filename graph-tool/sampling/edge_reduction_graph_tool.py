@@ -77,7 +77,8 @@ def run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr):
     return G_reduced 
 
 def edge_reduce(G, edges_max_goal, weight_attr): 
-    cent = graph_tool.centrality.betweenness(G, pivots=None, vprop=None, eprop=None, weight=None, norm=True)
+    edge_weight = G.edge_properties[weight_attr]
+    cent = graph_tool.centrality.betweenness(G, pivots=None, vprop=None, eprop=None, weight=edge_weight, norm=True)
     bet_cent_edges = cent[1] 
     return run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr)
  
@@ -187,7 +188,6 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
- 
 def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferred'):
     c = 10
     take_count = int(c * log10(G.num_vertices()))
@@ -205,6 +205,7 @@ def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferr
     nn = []
     ne = []
     wcc = []
+    graphs = []
 
     for edge_cut in edge_cuts:  
         current_time = time.time()

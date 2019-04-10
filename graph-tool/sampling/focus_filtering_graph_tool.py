@@ -40,11 +40,13 @@ def _plain_bfs(G, source):
 
 def selectRoot(graph, weight_attr):
     nodes = graph.get_vertices()
-    in_degrees =  np.array(graph.get_in_degrees(graph.get_vertices()))
-    out_degrees =  np.array(graph.get_out_degrees(graph.get_vertices())) 
+    edge_weight = graph.edge_properties[weight_attr]
+
+    in_degrees =  np.array(graph.get_in_degrees(graph.get_vertices(), edge_weight))
+    out_degrees =  np.array(graph.get_out_degrees(graph.get_vertices(), edge_weight)) 
     cum_weights = np.add(in_degrees, out_degrees)    
- 
-    nodes_degrees = np.hstack((nodes,cum_weights))
+  
+    nodes_degrees = np.column_stack((nodes,cum_weights))
     print(nodes_degrees)
     items = sorted(nodes_degrees,reverse=True, key=lambda x: x[1])
     root = items[:1] 
@@ -55,15 +57,16 @@ def selectRoot(graph, weight_attr):
     print("root2", root2)
     #todo replace root with root2
 
-    return root[0][0]
+    return root[0][0], nodes_degrees
 
-def FBF_recursive(G, tree_nodes, weight_attr, neighbours = None, lastAdded = None):  
+def FBF_recursive(G, tree_nodes, weight_attr, node_degrees, neighbours = None, lastAdded = None):  
     # pick a neightbour Vn+1 with a highest degree
     if neighbours == None:
         neighbours = []  
-
-    neighbours.extend(G.degree(G.successors(lastAdded), weight=weight_attr)) 
-    neighbours.extend(G.degree(G.predecessors(lastAdded), weight=weight_attr)) 
+    v = G.vertex(lastAdded) 
+    n = v.all_neighbors()
+    new_neighbours = [(vert, vert.in_degree(weight=weight_attr)+vert.out_degree(weight=weight_attr)) for vert in v.all_neighbors()]
+    neighbours.extend(new_neighbours)  
             
     # neighbours of nodes in tree
     neighbours = [x for x in neighbours if x[0] not in tree_nodes]  
@@ -75,19 +78,17 @@ def FBF_recursive(G, tree_nodes, weight_attr, neighbours = None, lastAdded = Non
     #print("neighbours.len 2:", len(neighbours))
     #print(G.edges)
 
-    # edges between Vn+1 and tree nodes  
-    edges = [e for e in (G.edges(top[0])) if e[1] in tree_nodes] 
-    if (len(edges) == 0):
-        edges = [e for e in list(G.in_edges(top[0])) if e[1] in tree_nodes or e[0] in tree_nodes] 
-   
-    nodes = set(list(sum(edges, ()))) - set([top[0]]) 
-    
-    vn_weight = (G.degree(nodes, weight=weight_attr))  
-    other_end = max(vn_weight, key=lambda x: x[1])
- 
-    # edge = [item for item in edges if other_end[0] in item][0]
-    edge = [e for e in edges if e[0] == other_end[0] or e[1] == other_end[0]][0]
+    # edges between Vn+1 and tree nodes    
+    edges = [e for e in top[0].all_edges() if e.source() in tree_nodes or e.target() in tree_nodes] 
 
+    edges_vert = np.array([[e.source(), e.target()] for e in edges]).flatten()
+    nodes = set(list(edges_vert)) - set([top[0]])  
+    #vn_weight = [node_degrees[np.where(node_degrees[:, 0] == vert)][0] for vert in nodes]
+    
+    vn_weight = [(vert, vert.in_degree(weight=weight_attr)+vert.out_degree(weight=weight_attr)) for vert in nodes]
+    other_end = max(vn_weight, key=lambda x: x[1])
+  
+    edge = [e for e in edges if e.source() == other_end[0] or e.target() == other_end[0]][0] 
     return edge, neighbours, top[0] 
 
 def dense_component_extraction(G, tree, v_delete, e_delete, threshold, weight_attr):
@@ -95,42 +96,47 @@ def dense_component_extraction(G, tree, v_delete, e_delete, threshold, weight_at
         return tree 
 
     # for each edge not in tree
-    skipped_edges = set(G.edges.data(weight_attr, default=0)) - set(tree.edges.data(weight_attr, default=0))  
+    #skipped_edges = set(G.edges.data(weight_attr, default=0)) - set(tree.edges.data(weight_attr, default=0))  
+    filtered_edges = set(G.edges()) - set(tree.edges()) 
+
+    edge_weight = G.edge_properties[weight_attr]
+    #t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
+    
+    #filtered_edges = set(G.edges()) - set(tree.edges())  
      
-    current_time = time.time()
-    tree_ud = tree.to_undirected(as_view=True)
-    print("to_undirected:", time.time()-current_time) 
+    #current_time = time.time()
+    #tree_ud = tree.to_undirected(as_view=True) 
       
     # compute shortest path, keep adding the ones with the longest path
-    items = [] 
-    edge_weight = G.edge_properties[weight_attr]
+    items = []  
     #lengths = dict(nx.all_pairs_shortest_path_length(tree_ud))
     #lengths = dict(nx.all_pairs_shortest_path_length(tree_ud)) 
 
-    for edge in skipped_edges:
+    for edge in filtered_edges:
         #length = nx.shortest_path_length(tree_ud, source=edge[0], target=edge[1], weight = weight_attr)
-        length = graph_tool.topology.shortest_distance(g, edge[0], edge[1], weights=edge_weight)
+        length = graph_tool.topology.shortest_distance(G, edge.source(), edge.target(), weights=edge_weight)
         #items.append((edge[0], edge[1], edge[2], lengths[edge[1]][edge[0]])) 
         #items.append((edge[0], edge[1], edge[2], length)) 
         items.append((edge, length)) 
     
     items = sorted(items, reverse=True, key=lambda x: x[1])  
-    print("items", items)
+    #print("items", items) 
     
-    
-    items = [(item[0], item[1], item[2]) for item in items]
+    #items = [(item[0], item[1], item[2]) for item in items]
     number_to_add = int(threshold - tree.num_edges()) 
     edges_to_add = items[:number_to_add]
+    print("tree.num_edges(): ", tree.num_edges())
   
     for edge in edges_to_add:
-        e_delete[edge] = True  
+        e_delete[edge[0]] = True  
  
     tree.set_edge_filter(e_delete)
+    print("tree.num_edges(): ", tree.num_edges())
 
     #tree.add_weighted_edges_from(items[:number_to_add])
     return tree 
 
-def FBF(G, weight_attr, root, threshold):  
+def FBF(G, weight_attr, root, threshold, node_degrees):  
     G_num_vertices = G.num_vertices()
     tree = Graph(G) 
 
@@ -145,15 +151,12 @@ def FBF(G, weight_attr, root, threshold):
     tree_nodes = [root]
     tree_edges = []
     neighbours = list()
+    edge_weight = G.edge_properties[weight_attr]
  
     top = root
     while len(tree_nodes) != G_num_vertices:
-        edge, neighbours, top = FBF_recursive(G, tree_nodes, weight_attr, neighbours, top)
-        #print("weight=edge[2]", edge[2])
-        
-        #tree.add_edges_from([edge])
-        #tree.add_edge(edge[0], edge[1], weight_attr=edge[2])
-        #print("tree_nodes:",tree_nodes)
+        edge, neighbours, top = FBF_recursive(G, tree_nodes, edge_weight, node_degrees, neighbours, top)
+
         tree_nodes.append(top)
         tree_edges.append(edge)
         
@@ -170,7 +173,7 @@ def FBF(G, weight_attr, root, threshold):
 
     print("before dense_component_extraction")
     print("num edges: ", tree.num_vertices(), tree.num_edges()) 
-    tree = dense_component_extraction(G, v_delete, e_delete, tree, threshold, weight_attr) 
+    tree = dense_component_extraction(G,  tree, v_delete, e_delete, threshold, weight_attr) 
     print("after dense_component_extraction")
     print("num edges: ", tree.num_vertices(), tree.num_edges()) 
     return tree
@@ -206,7 +209,7 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
     ne = []
     wcc = []
 
-    root = selectRoot(G, weight_attr)
+    root, node_degrees = selectRoot(G, weight_attr)
     
     print("root: ", root)
     for edge_cut in edge_cuts: 
@@ -217,7 +220,7 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
 
         print("original:", G.num_edges())
 
-        G_reduced = FBF(G, weight_attr, root, threshold) 
+        G_reduced = FBF(G, weight_attr, root, threshold, node_degrees) 
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
 
         G_reduced.clear_filters()
@@ -236,7 +239,7 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
     wcc = []
     graphs = []
 
-    root = selectRoot(G_r, weight_attr)
+    root, nodes_degrees = selectRoot(G_r, weight_attr)
 
     print("root: ", root)
     for edge_cut in edge_cuts: 
@@ -247,7 +250,7 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
 
         print("original:", G.num_edges())
 
-        G_reduced = FBF(G, weight_attr, root, threshold) 
+        G_reduced = FBF(G, weight_attr, root, threshold, nodes_degrees) 
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
 
         graphs.append(G_reduced)

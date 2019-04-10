@@ -34,7 +34,7 @@ def _plain_bfs(G, source):
                 nextlevel.update(v.in_neighbors())
                 nextlevel.update(v.out_neighbors())
 
-def remove_edges(G_reduced, e_delete, items, edges_max_goal):
+def remove_edges(G_reduced, items, edges_max_goal):
     current_time = time.time()
     removed_edges = []
     #sorted_bet_cent_edges = sorted(items,reverse=False) 
@@ -55,11 +55,7 @@ def remove_edges(G_reduced, e_delete, items, edges_max_goal):
         v0 = G_reduced.vertex(bet_cent[0])
         v1 = G_reduced.vertex(bet_cent[1])
         if (v0.in_degree() + v0.out_degree()) > 2 and (v1.in_degree() + v1.out_degree()) > 2:
-            e_delete[G_reduced.edge(bet_cent[0], bet_cent[1])] = False
-            #print("before  ", G_reduced.num_edges()) 
-            G_reduced.set_edge_filter(e_delete)
-            #print("after  ", G_reduced.num_edges())
-            # G_reduced.remove_edge(G_reduced.edge(bet_cent[0],bet_cent[1]))
+            G_reduced.remove_edge(G_reduced.edge(bet_cent[0],bet_cent[1]))
             removed_edges.append(bet_cent) 
 
     time_spent = time.time()-current_time
@@ -68,28 +64,27 @@ def remove_edges(G_reduced, e_delete, items, edges_max_goal):
 
     return G_reduced, removed_edges
  
-def run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr): 
-    graph = Graph(G)
-    e_delete = graph.new_edge_property("bool", True) 
-    G_reduced, removed_edges = remove_edges(graph, e_delete, bet_cent_edges, edges_max_goal) 
-    G_reduced = postprocess(G, G_reduced, e_delete, removed_edges)
-
-    return G_reduced 
 
 def edge_reduce(G, edges_max_goal, weight_attr): 
     cent = graph_tool.centrality.betweenness(G, pivots=None, vprop=None, eprop=None, weight=None, norm=True)
-    bet_cent_edges = cent[1] 
-    return run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr)
+    bet_cent_edges = cent[1]
+    graph = Graph(G)
+    G_reduced, removed_edges = remove_edges(graph, bet_cent_edges, edges_max_goal)
+    G_reduced = postprocess(G_reduced, removed_edges)
+    return G_reduced 
  
-def edge_reduce_bc_approximate(G, edges_max_goal, weight_attr): 
+def edge_reduce_approximate(G, edges_max_goal, weight_attr): 
     c = 10
     take_count = int(c * log10(G.num_vertices())) 
     nodes_rand = np.random.choice(G.num_vertices(), take_count)
     edge_weight = G.edge_properties[weight_attr]
 
     cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=edge_weight, norm=True)
-    bet_cent_edges = cent[1] 
-    return run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr) 
+    bet_cent_edges = cent[1]
+    graph = Graph(G)
+    G_reduced, removed_edges = remove_edges(graph, bet_cent_edges, edges_max_goal)
+    G_reduced = postprocess(G_reduced, removed_edges)
+    return G_reduced
 
 def get_in_degree(G): 
     return (sum(G.get_in_degrees(G.get_vertices()) )/float(G.num_vertices()))
@@ -97,7 +92,7 @@ def get_in_degree(G):
 def get_out_degree(G): 
     return (sum(G.get_out_degrees(G.get_vertices())/float(G.num_vertices())))
 
-def postprocess(G, G_reduced, e_delete, items):
+def postprocess(G_reduced, items):
     _components = [c for c in weakly_connected_components(G_reduced)]
     number_wcc = len(_components)
     if number_wcc == 1:
@@ -118,13 +113,12 @@ def postprocess(G, G_reduced, e_delete, items):
             if edge[0] in c and edge[1] in c :
                 # edge is within one component
                 break
-            elif edge[0] in c or edge[1] in c : 
-                # edge is connecting two components  
-                original_edge = G.edge(edge[0], edge[1]) 
+            elif edge[0] in c or edge[1] in c :  
+                # edge is coneecting two components  
 
-                # add back the edge 
-                e_delete[original_edge] = True 
-                G_reduced.set_edge_filter(e_delete)
+                # add back the edge
+                # todo add an edge with the weight 
+                G_reduced.add_edge(edge[0], edge[1])
                 _components = [c for c in weakly_connected_components(G_reduced)]
                 number_wcc = len(_components) 
                 # try _components = nx.weakly_connected_components(G_reduced)
@@ -133,7 +127,6 @@ def postprocess(G, G_reduced, e_delete, items):
     time_spent = time.time()-current_time
     print("postprocessing took : ", time_spent)
     return G_reduced  
-
 
 def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc):
     edge_weight = G_reduced.edge_properties[weight_attr]
@@ -159,7 +152,6 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
 
     cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=edge_weight, norm=True)
     bet_cent_edges = cent[1]  
-
     total_weight = []
     in_degree = []
     out_degree = []
@@ -168,50 +160,16 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
     nn = []
     ne = []
     wcc = []
-    graphs = []
 
     for edge_cut in edge_cuts:  
         current_time = time.time()
-        edges_max_goal = G.num_edges() * edge_cut 
+        edges_max_goal = G.num_edges() * edge_cut
+        graph = Graph(G)
         print("original:", G.num_edges())
-        G_reduced = run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr) 
-
-        time_spent = time.time()-current_time 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
-
-        print("num edges: ", G_reduced.num_edges())  
-        graphs.append(Graph(G_reduced))
-
-        G.clear_filters() 
-        G_reduced.clear_filters() 
-
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
-
+        G_reduced, removed_edges = remove_edges(graph, bet_cent_edges, edges_max_goal)
+        print("number weakly_connected_components:  ", number_weakly_connected_components(G_reduced))
+        G_reduced = postprocess(G_reduced, removed_edges)
  
-def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferred'):
-    c = 10
-    take_count = int(c * log10(G.num_vertices()))
-    nodes_rand = np.random.choice(G.num_vertices(), take_count)
-    edge_weight = G.edge_properties[weight_attr]
-
-    cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=edge_weight, norm=True)
-    bet_cent_edges = cent[1]  
-
-    total_weight = []
-    in_degree = []
-    out_degree = []
-    running_time = []
-    average_clustering = []
-    nn = []
-    ne = []
-    wcc = []
-
-    for edge_cut in edge_cuts:  
-        current_time = time.time()
-        edges_max_goal = G.num_edges() * edge_cut 
-        print("original:", G.num_edges())
-        G_reduced = run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr) 
-
         time_spent = time.time()-current_time 
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
 
@@ -219,9 +177,6 @@ def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferr
         #print("weight: ", G_reduced.size())
         #print("weight: ", G_reduced.size(weight=weight_attr)) 
 
-        graphs.append(Graph(G_reduced, prune=True))
-        print("weight: ", G_reduced.size())
-        print("weight: ", G_reduced.size(weight=weight_attr)) 
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, graphs
-
+ 

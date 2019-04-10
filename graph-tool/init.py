@@ -40,21 +40,16 @@ def load_g(file_name):
     #g = graph_tool.GraphView(graph, vfilt=graph_tool.topology.label_largest_component(graph))
     #print("num_vertices", g.num_vertices())
     #print("num_edges", g.num_edges())
+
     return graph_largest_component
 
 def run_tests(graph, file_name, data, weight_attr): 
-    edge_percentages = [1, 0.7, 0.4]
+    #edge_percentages = [1, 0.7, 0.4]
+    edge_percentages = [0.05]
+    run_FF(edge_percentages, graph, file_name, {}, weight_attr)
+    run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     run_BC(edge_percentages, graph, file_name, {}, weight_attr)
-
-    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS_graph_tool.WIS_test(graph, edge_percentages, weight_attr)
-    print("edge_cuts_WIS", edge_cuts_1)
-    print("total_weight_WIS", total_weight_1) 
-    print("wcc_WIS", wcc1)    
-    print("in_degree_WIS", in_degree1)
-    print("out_degree_WIS", out_degree1)
-    print("average_clustering1", average_clustering1)
-    print("nn1", nn1)
-    print("ne1", ne1)
+    #run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
 
 def run_BC(edge_percentages, graph, file_name, data, weight_attr):
     print("BC")
@@ -70,9 +65,45 @@ def run_BC(edge_percentages, graph, file_name, data, weight_attr):
     print("nn2", nn2)
     print("ne2", ne2)
 
+
+def run_FF(edge_percentages, graph, file_name, data, weight_attr):
+    print("FF")
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering_graph_tool.run_focus_test(graph, edge_percentages, weight_attr)
+    # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
+ 
+    print("edge_cuts_FF", edge_cuts_3)
+    print("total_weight_FF", total_weight_3) 
+    print("wcc_FF", wcc3)   
+
+
+def run_SRS2(edge_percentages, graph, file_name, data, weight_attr):
+    print("SRS2")
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4 = sampling.SRS2_graph_tool.SRS2_test(file_name, graph.copy(), edge_percentages, weight_attr)
+    print("edge_cuts_SRS2", edge_cuts_4)
+    print("total_weight_SRS2", total_weight_4) 
+    print("wcc_SRS2", wcc4)   
+    print("in_degree_SRS2", in_degree4)
+    print("out_degree_SRS2", out_degree4)
+    print("average_clustering_SRS2", average_clustering4)
+    print("nn_SRS2", nn4)
+    print("ne_SRS2", ne4)
+
+
+def run_WIS(edge_percentages, graph, file_name, data, weight_attr):
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS_graph_tool.WIS_test(graph, edge_percentages, weight_attr)
+    print("edge_cuts_WIS", edge_cuts_1)
+    print("total_weight_WIS", total_weight_1) 
+    print("wcc_WIS", wcc1)    
+    print("in_degree_WIS", in_degree1)
+    print("out_degree_WIS", out_degree1)
+    print("average_clustering1", average_clustering1)
+    print("nn1", nn1)
+    print("ne1", ne1)
+
+
 weight_attr = "lastTs" 
-#g = load_g("test_caveman_8_50.graphml")
-#run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
+g = load_g("test_caveman_8_50.graphml")
+run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #print(g.get_edges())
 
 #g = load_g("9101-1383f38c.graphml")
@@ -81,10 +112,11 @@ weight_attr = "lastTs"
 #g = load_g("9101-12bbf821.graphml")
 #run_tests(g, "9101-12bbf821.graphml", {}, weight_attr)
 
-g = load_g("small.graphml")
-run_tests(g, "small.graphml", {}, weight_attr)
-g = load_g("huge.graphml")
-run_tests(g, "hug.graphml", {}, weight_attr)
+#g = load_g("small.graphml")
+#run_tests(g, "small.graphml", {}, weight_attr)
+ 
+#g = load_g("huge.graphml")
+#run_tests(g, "hug.graphml", {}, weight_attr)
 
 def load_test_graph(): 
     # We want also to keep the age information for each vertex and edge. For that

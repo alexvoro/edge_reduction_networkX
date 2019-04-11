@@ -20,7 +20,7 @@ def read_json_(filename):
 def read_json_file(filename):
     graph = read_json_(filename)
     return graph.subgraph(max(nx.weakly_connected_components(graph), key=len))  
-
+  
 def WIS_reduce_test(filename, G, sizes, weight_attr):   # weighted    
     #print(nx.info(graph))
     n = G.number_of_nodes() 
@@ -30,6 +30,7 @@ def WIS_reduce_test(filename, G, sizes, weight_attr):   # weighted
     nodes = [0]*n
     node_indexes = []
     node_prob = [] 
+ 
  
     for i,v in enumerate(list(G.nodes(data=True))): 
         tot_weight += G.degree(v[0], weight=weight_attr) 
@@ -55,7 +56,11 @@ def WIS_reduce_test(filename, G, sizes, weight_attr):   # weighted
         c = 0 
         integers = []
 
+        #indexes = np.random.choice(node_indexes, size, replace=True, p=node_prob)
         indexes = np.random.choice(node_indexes, size, replace=False, p=node_prob)
+        
+        unique_indexes_to_keep = list(set(indexes)) 
+        
         nodes_to_keep = [ nodes[i] for i in indexes ] 
         nodes_to_keep = list(set(nodes_to_keep))
         print("nodes_to_keep size: ", len(nodes_to_keep))
@@ -82,7 +87,7 @@ def WIS_reduce_test(filename, G, sizes, weight_attr):   # weighted
         wcc.append(nx.number_weakly_connected_components(G_reduced))
 
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
-
+ 
 def get_in_degree(G):
     if (len(G) == 0):
         return len(G)

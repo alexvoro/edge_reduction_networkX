@@ -86,6 +86,7 @@ def dense_component_extraction(G, tree, threshold, weight_attr):
 
     for edge in skipped_edges:
         #length = nx.shortest_path_length(tree_ud, source=edge[0], target=edge[1], weight = weight_attr)
+        #all_l = lengths[edge[1]][edge[0]]
         items.append((edge[0], edge[1], edge[2], lengths[edge[1]][edge[0]])) 
         #items.append((edge[0], edge[1], edge[2], length)) 
     
@@ -94,6 +95,7 @@ def dense_component_extraction(G, tree, threshold, weight_attr):
     
     items = [(item[0], item[1], {weight_attr: item[2]}) for item in items] 
     number_to_add = int(threshold - tree.number_of_edges()) 
+    tt = items[:number_to_add]
     tree.add_edges_from(items[:number_to_add])
     return tree 
 

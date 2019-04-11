@@ -173,25 +173,23 @@ def run_test_for_file(graph, file_name, data, weight_attr):
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01]  
     #edge_percentages = [1, 0.8, 0.5, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
     #edge_percentages = [0.4, 0.03, 0.02, 0.01] 
-    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
+    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]  
     #edge_percentages = [1, 0.8, 0.6, 0.4, 0.2, 0.08, 0.06, 0.04, 0.02, 0.01, 0.008, 0.006, 0.004, 0.002, 0.001, 0.0008, 0.0006, 0.0004, 0.0002 ]  
     
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
  
-    #graph = read_json_file("real_data_small.json")
- 
-    print("FF")
-    edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc  = sampling.focus_filtering_improved.run_focus_test(graph, edge_percentages, weight_attr)
-    # edge_cuts_3, total_weight_3 = sampling.edge_reduction.edge_reduce_test(graph.copy(), edge_cuts_1, 'weight')
- 
-    print("edge_cuts_FF", edge_cuts)
-    print("total_weight_FF", total_weight) 
-    print("in_degree", in_degree) 
-    print("out_degree", out_degree) 
-    print("average_clustering", average_clustering) 
-    print("nn", nn) 
-    print("ne", ne) 
-    print("wcc_FF", wcc)
+    #graph = read_json_file("real_data_small.json") 
+
+    print("WIS")
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS.WIS_test(file_name, graph.copy(), edge_percentages, weight_attr)
+    print("edge_cuts_WIS", edge_cuts_1)
+    print("total_weight_WIS", total_weight_1) 
+    print("wcc_WIS", wcc1)    
+    print("in_degree_WIS", in_degree1)
+    print("out_degree_WIS", out_degree1)
+    print("average_clustering1", average_clustering1)
+    print("nn1", nn1)
+    print("ne1", ne1)
 
 def save_graph(original_file_name, graphs, edge_percentages, alg_name):
     for x in range(0, len(edge_percentages)):

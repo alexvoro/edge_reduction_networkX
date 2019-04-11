@@ -7,10 +7,40 @@ import os
 from graph_tool.all import * 
 from matplotlib.pyplot import *   
 from numpy.random import *  
+import json
+import time
 seed(42)
 import sampling
 from sampling import WIS_graph_tool, edge_reduction_graph_tool, extensions, focus_filtering_graph_tool, SRS2_graph_tool
  
+def weakly_connected_components(G): 
+    seen = set()
+    for v in G.vertices():
+        if v not in seen:
+            c = set(_plain_bfs(G, v))
+            yield c
+            seen.update(c)
+
+
+def number_weakly_connected_components(G): 
+    return sum(1 for wcc in weakly_connected_components(G))
+
+def _plain_bfs(G, source):
+    """A fast BFS node generator 
+    The direction of the edge between nodes is ignored. 
+    For directed graphs only. 
+    """ 
+    seen = set()
+    nextlevel = {source}
+    while nextlevel:
+        thislevel = nextlevel
+        nextlevel = set()
+        for v in thislevel:
+            if v not in seen:
+                yield v
+                seen.add(v)
+                nextlevel.update(v.in_neighbors())
+                nextlevel.update(v.out_neighbors())
 # let's construct a Price network (the one that existed before Barabasi). It is
 # a directed network, with preferential attachment. The algorithm below is
 # very naive, and a bit slow, but quite simple.
@@ -43,13 +73,51 @@ def load_g(file_name):
 
     return graph_largest_component
 
+def save_json(data): 
+    print("data", data)
+    print("saving json")
+    with open('tests_output.json', 'w') as outfile:
+        json.dump(data, outfile)
+
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.7, 0.4]
-    edge_percentages = [0.05]
-    #run_FF(edge_percentages, graph, file_name, {}, weight_attr)
-    run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
-    run_BC(edge_percentages, graph, file_name, {}, weight_attr)
-    #run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]   
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
+    data = write_json_output(file_name, data, graph,
+        edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2,
+        edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1,
+        edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3,
+        edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4)
+    
+    save_json(data)
+
+def run_FF_test(graph, file_name, data, weight_attr): 
+    #edge_percentages = [1, 0.7, 0.4]
+    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01]  
+    
+    current_time = time.time()
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3  = sampling.focus_filtering_graph_tool.run_focus_test(graph, edge_percentages, weight_attr)
+    print("2  took:", time.time()-current_time)  
+    print(total_weight_3)
+    save_json(data)
+
+
+def run_WIS_test(graph, file_name, data, weight_attr): 
+    #edge_percentages = [1, 0.7, 0.4]
+    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01] 
+    current_time = time.time()
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS_graph_tool.WIS_test(graph, edge_percentages, weight_attr)
+    print("edge_cuts_WIS", edge_cuts_1)
+    print("total_weight_WIS", total_weight_1) 
+    print("wcc_WIS", wcc1)    
+    print("in_degree_WIS", in_degree1)
+    print("out_degree_WIS", out_degree1)
+    print("average_clustering1", average_clustering1)
+    print("nn1", nn1)
+    print("ne1", ne1)
 
 def run_BC(edge_percentages, graph, file_name, data, weight_attr):
     print("BC")
@@ -65,6 +133,8 @@ def run_BC(edge_percentages, graph, file_name, data, weight_attr):
     print("nn2", nn2)
     print("ne2", ne2)
 
+    return  edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2
+
 
 def run_FF(edge_percentages, graph, file_name, data, weight_attr):
     print("FF")
@@ -74,7 +144,7 @@ def run_FF(edge_percentages, graph, file_name, data, weight_attr):
     print("edge_cuts_FF", edge_cuts_3)
     print("total_weight_FF", total_weight_3) 
     print("wcc_FF", wcc3)   
-
+    return edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3
 
 def run_SRS2(edge_percentages, graph, file_name, data, weight_attr):
     print("SRS2")
@@ -88,6 +158,7 @@ def run_SRS2(edge_percentages, graph, file_name, data, weight_attr):
     print("nn_SRS2", nn4)
     print("ne_SRS2", ne4)
 
+    return edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4 
 
 def run_WIS(edge_percentages, graph, file_name, data, weight_attr):
     edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS_graph_tool.WIS_test(graph, edge_percentages, weight_attr)
@@ -100,10 +171,68 @@ def run_WIS(edge_percentages, graph, file_name, data, weight_attr):
     print("nn1", nn1)
     print("ne1", ne1)
 
+    return edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1
+
+def write_json_output(file_name, data, graph,
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2,
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1,
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3,
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4):
+    graph = {
+        'number_of_nodes': graph.num_vertices(),
+        'number_of_edges': graph.num_edges(), 
+        'number_of_wcc': number_weakly_connected_components(graph),
+    }
+
+    tests= {
+        'edge_cuts_WIS': edge_cuts_1,
+        'total_weight_WIS': total_weight_1,
+        'in_degree_WIS': in_degree1,
+        'out_degree_WIS': out_degree1,
+        'nn_WIS': nn1,
+        'ne_WIS': ne1,
+        'average_clustering_WIS': average_clustering1,
+        'wcc_WIS': wcc1,
+        'edge_cuts_BC': edge_cuts_2,
+        'total_weight_BC': total_weight_2,
+        'in_degree_BC': in_degree2,
+        'out_degree_BC': out_degree2, 
+        'nn_BC': nn2,
+        'ne_BC': ne2,
+        'average_clustering_BC': average_clustering2,
+        'wcc_BC': wcc2,
+        'edge_cuts_FF': edge_cuts_3,
+        'total_weight_FF': total_weight_3,
+        'in_degree_FF': in_degree3,
+        'out_degree_FF': out_degree3,
+        'nn_FF': nn3,
+        'ne_FF': ne3,
+        'average_clustering_FF': average_clustering3,
+        'wcc_FF': wcc3,
+        'edge_cuts_SRS2': edge_cuts_4,
+        'total_weight_SRS2': total_weight_4,
+        'in_degree_SRS2': in_degree4,
+        'out_degree_SRS2': out_degree4,
+        'nn_SRS2': nn4,
+        'ne_SRS2': ne4,
+        'average_clustering_SRS2': average_clustering4,
+        'wcc_SRS2': wcc4
+    }
+
+    data[file_name] = {
+        'graph': graph,
+        'tests': tests
+    } 
+
+    return data
 
 weight_attr = "lastTs" 
 g = load_g("test_caveman_8_50.graphml")
-run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
+#run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
+#run_FF_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
+
+run_WIS_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
+
 #print(g.get_edges())
 
 #g = load_g("9101-1383f38c.graphml")

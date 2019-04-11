@@ -64,7 +64,7 @@ def WIS_reduce_test(graph, sizes, weight_attr):
 
     for size in sizes:
         print("size", size) 
-        indexes = np.random.choice(node_indexes, size, replace=True, p=node_prob) 
+        indexes = np.random.choice(node_indexes, size, replace=False, p=node_prob) 
         nodes_to_keep = nodes[indexes]
         nodes_to_keep = list(set(nodes_to_keep))
         print("nodes_to_keep size: ", len(nodes_to_keep))
@@ -115,9 +115,10 @@ def WIS_reduce_test_with_graphs(graph, sizes, weight_attr):   # weighted
     n = graph.num_vertices()
     node_indexes = np.arange(n) 
 
+    edge_weight = graph.edge_properties[weight_attr]
     nodes = graph.get_vertices()
-    in_degrees =  np.array(graph.get_in_degrees(graph.get_vertices()))
-    out_degrees =  np.array(graph.get_out_degrees(graph.get_vertices())) 
+    in_degrees =  np.array(graph.get_in_degrees(graph.get_vertices(), edge_weight))
+    out_degrees =  np.array(graph.get_out_degrees(graph.get_vertices(), edge_weight)) 
     cum_weights = np.add(in_degrees, out_degrees) 
     tot_weight = sum(cum_weights) 
     node_prob = [x / int(tot_weight) for x in cum_weights]    

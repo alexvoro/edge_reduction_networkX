@@ -37,41 +37,8 @@ def selectRoot(G, weight_attr):
     #todo replace root with root2
 
     return root[0][0]
-  
+
 def FBF_recursive(G, tree_nodes, weight_attr, neighbours = None, lastAdded = None):  
-    # pick a neightbour Vn+1 with a highest degree
-
-    current_time = time.time()
-    #neighbours.extend( G.degree(G.successors(lastAdded), weight=weight_attr) ) 
-    #neighbours.extend( G.degree(G.predecessors(lastAdded), weight=weight_attr) ) 
-     
-    neighbours.extend(G.degree([x for x in G.successors(lastAdded) if x not in tree_nodes], weight=weight_attr))  
-    neighbours.extend(G.degree([x for x in G.predecessors(lastAdded) if x not in tree_nodes], weight=weight_attr)) 
-
-    neighbours = list(set(neighbours))    
-    top = neighbours[np.argmax( np.array([x[1] for x in neighbours]))] 
-
-    # edges between Vn+1 and tree nodes  
-    edges = [e for e in G.edges(top[0]) if e[1] in tree_nodes] 
-    if (len(edges) == 0):
-        edges = [e for e in G.in_edges(top[0]) if e[1] in tree_nodes or e[0] in tree_nodes] 
-   
-    nodes = set(list(sum(edges, ()))) - set([top[0]]) 
-    
-    vn_weight = (G.degree(nodes, weight=weight_attr))  
-    other_end = max(vn_weight, key=lambda x: x[1])
- 
-    #edge = [item for item in edges if other_end[0] in item][0]
-    edge = [e for e in edges if e[0] == other_end[0] or e[1] == other_end[0]][0] 
-    edge = (edge[0], edge[1], G[edge[0]][edge[1]][weight_attr])
-
-    neighbours.remove(top) 
-    #print("took:", time.time()-current_time) 
-      
-    return edge, neighbours, top[0] 
-
-
-def FBF_recursive_stable(G, tree_nodes, weight_attr, neighbours = None, lastAdded = None):  
     # pick a neightbour Vn+1 with a highest degree
     if neighbours == None:
         neighbours = []  
@@ -84,10 +51,7 @@ def FBF_recursive_stable(G, tree_nodes, weight_attr, neighbours = None, lastAdde
     neighbours = list(set(neighbours))  
      
     # neighbours with the highest degree 
-    top = max(neighbours, key=lambda x: x[1])
-    #print("neighbours.len 2:", len(neighbours)) 
-    #print("neighbours.len 2:", len(neighbours))
-    #print(G.edges)
+    top = max(neighbours, key=lambda x: x[1]) 
 
     # edges between Vn+1 and tree nodes  
     edges = [e for e in (G.edges(top[0])) if e[1] in tree_nodes] 
@@ -101,7 +65,8 @@ def FBF_recursive_stable(G, tree_nodes, weight_attr, neighbours = None, lastAdde
  
     # edge = [item for item in edges if other_end[0] in item][0]
     edge = [e for e in edges if e[0] == other_end[0] or e[1] == other_end[0]][0]
-
+    edge = (edge[0], edge[1], {weight_attr: G[edge[0]][edge[1]][weight_attr]})
+    
     return edge, neighbours, top[0] 
 
 def dense_component_extraction(G, tree, threshold, weight_attr):
@@ -127,9 +92,9 @@ def dense_component_extraction(G, tree, threshold, weight_attr):
     items = sorted(items, reverse=True, key=lambda x: x[3])  
     #print("items", items)
     
-    items = [(item[0], item[1], item[2]) for item in items]
+    items = [(item[0], item[1], {weight_attr: item[2]}) for item in items] 
     number_to_add = int(threshold - tree.number_of_edges()) 
-    tree.add_weighted_edges_from(items[:number_to_add])
+    tree.add_edges_from(items[:number_to_add])
     return tree 
 
 def FBF(G, weight_attr, root, threshold): 
@@ -160,12 +125,8 @@ def FBF(G, weight_attr, root, threshold):
         tree_edges.append(edge)
         
     tree.add_nodes_from(tree_nodes)
-    tree.add_weighted_edges_from(tree_edges)
-    print("before dense_component_extraction")
-    print(nx.info(tree)) 
-    tree = dense_component_extraction(G, tree, threshold, weight_attr) 
-    print("after dense_component_extraction")
-    print(nx.info(tree))
+    tree.add_edges_from(tree_edges) 
+    tree = dense_component_extraction(G, tree, threshold, weight_attr)   
     
     return tree
 
@@ -175,8 +136,7 @@ def get_in_degree(G):
 def get_out_degree(G):
     return (sum(d for n, d in G.out_degree())/float(len(G)))
 
-def run_focus_test(G, edge_cuts, weight_attr='transferred'):
-    G_r = G
+def run_focus_test(G, edge_cuts, weight_attr='transferred'): 
     total_weight = [] 
     in_degree = []
     out_degree = []
@@ -185,32 +145,25 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
     ne = []
     wcc = []
 
-    root = selectRoot(G_r, weight_attr)
+    root = selectRoot(G, weight_attr)
     
     print("root: ", root)
-    for edge_cut in edge_cuts: 
-        print("G_r.number_of_edges():", G_r.number_of_edges())
-        threshold = G_r.number_of_edges() * edge_cut
+    for edge_cut in edge_cuts:  
+        threshold = G.number_of_edges() * edge_cut
         print("edge_cut:", edge_cut)
         print("threshold:", threshold) 
 
         print("original:", G.number_of_edges())
-        G_reduced = FBF(G_r, weight_attr, root, threshold)
-        print("weight: ", G_reduced.size())
-        #print("weight_attr", weight_attr)
-        
-        #print("weight: ", G_reduced.size(weight=weight_attr)) 
-        print("weight: ", G_reduced.size(weight="weight")) 
+        G_reduced = FBF(G, weight_attr, root, threshold)
+        print("weight: ", G_reduced.size())  
+        print("weight: ", G_reduced.size(weight=weight_attr))  
         
         print(nx.info(G_reduced))
-        total_weight.append(G_reduced.size(weight="weight")) 
-        #print("weight: ", G_reduced.size())
-        #print("weight: ", G_reduced.size(weight=weight_attr))
+        total_weight.append(G_reduced.size(weight=weight_attr))  
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
         #average_clustering.append(nx.average_clustering(G_reduced.to_undirected()))
-        #print("postprocessing took:", time.time()-current_time)  
-        #print(nx.info(G_reduced))
+        #print("postprocessing took:", time.time()-current_time)   
 
         nn.append(G_reduced.number_of_nodes())
         ne.append(G_reduced.number_of_edges())
@@ -245,16 +198,7 @@ def run_focus_test_one(G, edge_cuts, weight_attr='transferred'):
     #print(nx.info(G_reduced))
 
     return edge_cuts, total_weight, in_degree, out_degree
-
-def run_focus(G, weight, threshold): 
-    root = selectRoot(G, weight)
-    print("root: ", root) 
-    
-    current_time = time.time()
-    tree = FBF(G, weight, root, threshold)
-    print("FBF took", time.time()-current_time)
-    return tree
-
+ 
 def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'): 
     G_r = G
     total_weight = [] 
@@ -277,7 +221,7 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
         print("threshold", threshold) 
         G_reduced = FBF(G_r, weight_attr, root, threshold) 
          
-        total_weight.append(G_reduced.size(weight="weight"))  
+        total_weight.append(G_reduced.size(weight=weight_attr))  
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
         #average_clustering.append(nx.average_clustering(G_reduced.to_undirected())) 

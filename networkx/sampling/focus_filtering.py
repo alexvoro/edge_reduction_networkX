@@ -81,9 +81,11 @@ def dense_component_extraction(G, tree, threshold, weight_attr):
     items = sorted(items, reverse=True, key=lambda x: x[3])  
     #print("items", items)
     
-    items = [(item[0], item[1], item[2]) for item in items]
+    items = [(item[0], item[1], {weight_attr: item[2]}) for item in items]
     number_to_add = int(threshold - tree.number_of_edges()) 
-    tree.add_weighted_edges_from(items[:number_to_add])
+    #tree.add_weighted_edges_from(items[:number_to_add])
+    tree.add_edges_from(items[:number_to_add])
+    #1, 3, weight=7, capacity=15, length=342.7
     return tree 
 
 def FBF(G, weight_attr, root, threshold): 
@@ -128,6 +130,7 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
     ne = []
     wcc = []
 
+    print("weight_attr", weight_attr)
     root = selectRoot(G_r, weight_attr)
     
     print("root: ", root)
@@ -144,6 +147,7 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
         
         #print("weight: ", G_reduced.size(weight=weight_attr)) 
         print("weight: ", G_reduced.size(weight="weight")) 
+        print("weight: ", G_reduced.size(weight=weight_attr)) 
         
         print(nx.info(G_reduced))
         total_weight.append(G_reduced.size(weight="weight")) 
@@ -223,7 +227,7 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
         G_reduced = FBF(G_r, weight_attr, root, threshold) 
         
         print(nx.info(G_reduced))
-        total_weight.append(G_reduced.size(weight="weight"))  
+        total_weight.append(G_reduced.size(weight=weight_attr))  
         in_degree.append(get_in_degree(G_reduced))
         out_degree.append(get_out_degree(G_reduced))
         #average_clustering.append(nx.average_clustering(G_reduced.to_undirected())) 

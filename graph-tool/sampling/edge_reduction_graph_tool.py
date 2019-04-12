@@ -101,16 +101,12 @@ def get_out_degree(G):
 def postprocess(G, G_reduced, e_delete, items):
     _components = [c for c in weakly_connected_components(G_reduced)]
     number_wcc = len(_components)
-    if number_wcc == 1:
-        #print("****** already 1 component ")
+    if number_wcc == 1: 
         return G_reduced
 
-    current_time = time.time() 
-   # _components = list(G_reduced.subgraph(c) for c in nx.weakly_connected_components(G_reduced))
+    current_time = time.time()  
     print("number of disconnected components before postprocessing:", number_wcc)
-   
-    #print("items: ", items)
-    #print("reversed(items): ", reversed(items))
+    
     for edge in reversed(items):
         if number_wcc == 1: 
             break
@@ -127,30 +123,26 @@ def postprocess(G, G_reduced, e_delete, items):
                 e_delete[original_edge] = True 
                 G_reduced.set_edge_filter(e_delete)
                 _components = [c for c in weakly_connected_components(G_reduced)]
-                number_wcc = len(_components) 
-                # try _components = nx.weakly_connected_components(G_reduced)
+                number_wcc = len(_components)  
                 break
-     
-    time_spent = time.time()-current_time
-    print("postprocessing took : ", time_spent)
+                
     return G_reduced  
-
-
-def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc):
+ 
+def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):
     edge_weight = G_reduced.edge_properties[weight_attr]
     t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
 
     total_weight.append(t_weight) 
     in_degree.append(get_in_degree(G_reduced))
     out_degree.append(get_out_degree(G_reduced))
-    #running_time.append(time_spent)
+    running_time.append(time_spent)
     #average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
 
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
-    wcc.append(number_weakly_connected_components(G_reduced))
+    wcc.append(number_weakly_connected_components(G_reduced)) 
 
-    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
+    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
 
 def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
     c = 10
@@ -178,7 +170,7 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
         G_reduced = run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr) 
 
         time_spent = time.time()-current_time 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
 
         print("num edges: ", G_reduced.num_edges())  
         graphs.append(Graph(G_reduced))
@@ -186,7 +178,7 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
         G.clear_filters() 
         G_reduced.clear_filters() 
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
 
 def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferred'):
     c = 10
@@ -205,6 +197,7 @@ def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferr
     nn = []
     ne = []
     wcc = []
+    running_time = []
     graphs = []
 
     for edge_cut in edge_cuts:  
@@ -214,7 +207,7 @@ def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferr
         G_reduced = run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr) 
 
         time_spent = time.time()-current_time 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
 
         print("num edges: ", G_reduced.num_edges())  
         #print("weight: ", G_reduced.size())
@@ -224,5 +217,5 @@ def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferr
         print("weight: ", G_reduced.size())
         print("weight: ", G_reduced.size(weight=weight_attr)) 
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, graphs
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
 

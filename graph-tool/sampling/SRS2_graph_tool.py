@@ -60,22 +60,22 @@ def run_SRS2_test(G, edges_max_goal, weight_attr):
     G_reduced = SRS2(G, e_delete, weight_attr, edges_max_goal)
     return G_reduced
  
-def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc):
+def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):
     edge_weight = G_reduced.edge_properties[weight_attr]
     t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
 
     total_weight.append(t_weight) 
     in_degree.append(get_in_degree(G_reduced))
     out_degree.append(get_out_degree(G_reduced))
-    #running_time.append(time_spent)
+    running_time.append(time_spent)
     #average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
 
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
-    wcc.append(number_weakly_connected_components(G_reduced))
+    wcc.append(number_weakly_connected_components(G_reduced)) 
 
-    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
-
+    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+ 
 def SRS2_test(filename, G, edge_cuts, weight_attr): 
     total_weight = [] 
     in_degree = []
@@ -93,11 +93,11 @@ def SRS2_test(filename, G, edge_cuts, weight_attr):
         G_reduced = run_SRS2_test(G, edges_max_goal, weight_attr) 
         time_spent = time.time()-current_time
 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
  
         G_reduced.clear_filters()
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
 
 def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):   
     total_weight = [] 
@@ -117,11 +117,11 @@ def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):
         G_reduced = run_SRS2_test(G, edges_max_goal, weight_attr) 
         time_spent = time.time()-current_time
 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
  
         graphs.append(Graph(G_reduced, prune=True))
         G_reduced.clear_filters()
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, graphs
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
 
  

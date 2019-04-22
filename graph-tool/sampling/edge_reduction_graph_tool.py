@@ -4,49 +4,7 @@ import datetime
 from math import log10
 from graph_tool.all import *  
 import numpy as np
-
-def weakly_connected_components_old(G): 
-    seen = set()
-    for v in G.vertices():
-        if v not in seen:
-            c = set(_plain_bfs(G, v))
-            yield c
-            seen.update(c)
-
-
-def number_weakly_connected_components_old(G): 
-    return sum(1 for wcc in weakly_connected_components(G))
-
-
-def weakly_connected_components(G): 
-    seen = set()
-    for v in G.vertices():
-        if v not in seen:
-            c = set(_plain_bfs(G, v))
-            yield c
-            seen.update(c)
-
-
-def number_weakly_connected_components(G): 
-    return sum(1 for wcc in weakly_connected_components(G))
-
-def _plain_bfs(G, source):
-    """A fast BFS node generator 
-    The direction of the edge between nodes is ignored. 
-    For directed graphs only. 
-    """ 
-    seen = set()
-    nextlevel = {source}
-    while nextlevel:
-        thislevel = nextlevel
-        nextlevel = set()
-        for v in thislevel:
-            if v not in seen:
-                yield v
-                seen.add(v)
-                nextlevel.update(v.in_neighbors())
-                nextlevel.update(v.out_neighbors())
-  
+ 
 def remove_edges(G_reduced, e_delete, items, edges_max_goal):
     current_time = time.time()
     removed_edges = []
@@ -65,7 +23,6 @@ def remove_edges(G_reduced, e_delete, items, edges_max_goal):
             print("done :", G_reduced.num_edges())
             break
             
-        
         if(degrees_[bet_cent[0]] > 2 and degrees_[bet_cent[1]] > 2 ) :
             e_delete[G_reduced.edge(bet_cent[0], bet_cent[1])] = False
             
@@ -153,7 +110,7 @@ def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, avera
 
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
-    wcc.append(number_weakly_connected_components(G_reduced)) 
+    wcc.append(len(label_components(G_reduced, directed=False)[1])) 
 
     return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
 

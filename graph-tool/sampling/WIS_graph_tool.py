@@ -12,35 +12,6 @@ import random
 import bisect
 import itertools 
 
-def weakly_connected_components(G): 
-    seen = set()
-    for v in G.vertices():
-        if v not in seen:
-            c = set(_plain_bfs(G, v))
-            yield c
-            seen.update(c)
-
-
-def number_weakly_connected_components(G): 
-    return sum(1 for wcc in weakly_connected_components(G))
-
-def _plain_bfs(G, source):
-    """A fast BFS node generator 
-    The direction of the edge between nodes is ignored. 
-    For directed graphs only. 
-    """ 
-    seen = set()
-    nextlevel = {source}
-    while nextlevel:
-        thislevel = nextlevel
-        nextlevel = set()
-        for v in thislevel:
-            if v not in seen:
-                yield v
-                seen.add(v)
-                nextlevel.update(v.in_neighbors())
-                nextlevel.update(v.out_neighbors())
-
 def WIS_reduce_test(graph, sizes, weight_attr):   
     n = graph.num_vertices()
     node_indexes = np.arange(n) 
@@ -95,7 +66,7 @@ def get_stats(G_reduced, actual_edge_cut, weight_attr, edge_cuts_percentage, tot
 
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
-    wcc.append(number_weakly_connected_components(G_reduced))
+    wcc.append(len(label_components(G_reduced, directed=False)[1]))
 
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
 

@@ -11,65 +11,24 @@ import json
 import time
 seed(42)
 import sampling
-from sampling import WIS_graph_tool, edge_reduction_graph_tool, extensions, focus_filtering_graph_tool, SRS2_graph_tool
- 
-def weakly_connected_components(G): 
-    seen = set()
-    for v in G.vertices():
-        if v not in seen:
-            c = set(_plain_bfs(G, v))
-            yield c
-            seen.update(c)
-
-
-def number_weakly_connected_components(G): 
-    return sum(1 for wcc in weakly_connected_components(G))
-
-def _plain_bfs(G, source):
-    """A fast BFS node generator 
-    The direction of the edge between nodes is ignored. 
-    For directed graphs only. 
-    """ 
-    seen = set()
-    nextlevel = {source}
-    while nextlevel:
-        thislevel = nextlevel
-        nextlevel = set()
-        for v in thislevel:
-            if v not in seen:
-                yield v
-                seen.add(v)
-                nextlevel.update(v.in_neighbors())
-                nextlevel.update(v.out_neighbors())
-# let's construct a Price network (the one that existed before Barabasi). It is
-# a directed network, with preferential attachment. The algorithm below is
-# very naive, and a bit slow, but quite simple.
-
-# We start with an empty, directed graph
-#graph_tool.set_fast_edge_removal(fast=True)
-g = Graph()
-#g2 = load_graph("9101-12bbf821.graphml")
-#print("num_vertices",   g2.num_vertices())
-#print("num_edges",   g2.num_edges())
-
+from sampling import WIS_graph_tool, edge_reduction_graph_tool, focus_filtering_graph_tool, SRS2_graph_tool
+   
 def load_g(file_name): 
     graph = load_graph(file_name)
     print("num_vertices", graph.num_vertices())
     print("num_edges", graph.num_edges())
-    print("weakly_connected_components", extensions.number_weakly_connected_components(graph))
-    max_component = max(extensions.weakly_connected_components(graph), key=len)
+    print("weakly_connected_components", len(label_components(graph, directed=False)[1])) 
+      
+    if len(label_components(graph, directed=False)[1]) != 1:
+        c = label_largest_component(graph) 
+        largest_component = GraphView(graph, vfilt=c) 
+        g_largest_component = Graph(largest_component, prune=True)
+        print("num_vertices", g_largest_component.num_vertices())
+        print("num_edges", g_largest_component.num_edges()) 
 
-    graph_largest_component = GraphView(graph, vfilt=lambda v: v in max_component)
-    print("num_vertices", graph_largest_component.num_vertices())
-    print("num_edges", graph_largest_component.num_edges())
- 
-    c = label_largest_component(graph) 
-    largest_component = GraphView(graph, vfilt=c) 
-    g_largest_component = Graph(largest_component, prune=True)
-    print("num_vertices", g_largest_component.num_vertices())
-    print("num_edges", g_largest_component.num_edges()) 
-
-    return g_largest_component
+        return g_largest_component
+    else:
+        return graph
 
 def save_json(data): 
     print("data", data)
@@ -89,9 +48,9 @@ def run_tests(graph, file_name, data, weight_attr):
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
     edge_percentages = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
   
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     
     data = write_json_output(file_name, data, graph,
@@ -215,7 +174,7 @@ def write_json_output(file_name, data, graph,
     graph = {
         'number_of_nodes': graph.num_vertices(),
         'number_of_edges': graph.num_edges(), 
-        'number_of_wcc': number_weakly_connected_components(graph),
+        'number_of_wcc': len(label_components(graph, directed=False)[1]),
     }
 
     tests= {
@@ -265,9 +224,9 @@ def write_json_output(file_name, data, graph,
     return data
 
 weight_attr = "lastTs" 
-#g = load_g("test_caveman_8_50.graphml")
+g = load_g("test_caveman_8_50.graphml")
 #run_tests_for_files_in_folder("test_data_2", weight_attr)
-#run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
+run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_FF_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_WIS_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_tests_for_files_in_folder("test_data", weight_attr)
@@ -280,8 +239,8 @@ b = [(1, 0.3, 0.1), (0.08, 0.06, 0.03), (0.08, 0.06, 0.03)]
 c = a
 c = np.append(c, b, axis=0)
 
-g = load_g("9037-12bbf821.graphml")
-run_tests(g, "9037-12bbf821.graphml", {}, weight_attr)
+#g = load_g("9037-12bbf821.graphml")
+#run_tests(g, "9037-12bbf821.graphml", {}, weight_attr)
 
 #g = load_g("9101-12bbf821.graphml")
 #run_tests(g, "9101-12bbf821.graphml", {}, weight_attr)

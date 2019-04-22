@@ -28,40 +28,7 @@ def selectRoot(graph, weight_attr):
     v_degrees = np.column_stack(([v for v in graph.vertices()], cum_weights))
 
     return root[0][0], v_degrees
-  
-def FBF_recursive_old(G, tree_nodes, weight_attr, node_degrees, neighbours = None, lastAdded = None, nodesss = None):  
-    # pick a neightbour Vn+1 with a highest degree
-    if neighbours == None:
-        neighbours = [] 
-    in_n = G.get_in_neighbors(lastAdded)
-    out_n = G.get_out_neighbors(lastAdded)
-
-    n_v = np.append(in_n, out_n)
-    n_w = np.add(G.get_in_degrees(n_v, eweight=weight_attr), G.get_out_degrees(n_v, eweight=weight_attr))
-    
-    new_neighbours = np.column_stack((n_v,n_w)) 
-    neighbours.extend(new_neighbours)  
-            
-    # neighbours of nodes in tree
-    neighbours = [x for x in neighbours if x[0] not in tree_nodes]  
-    # neighbours = list(set(neighbours))  
-     
-    # neighbours with the highest degree 
-    top = max(neighbours, key=lambda x: x[1])
-
-    # edges between Vn+1 and tree nodes     
-    v_edges = np.vstack((G.get_in_edges(top[0]), G.get_out_edges(top[0])))
-    edges_vert = np.intersect1d(np.unique([[e[0], e[1]] for e in v_edges]), tree_nodes)
-
-    nodes = [G.vertex(v) for v in edges_vert]
-    vn_weight = [node_degrees[np.where(node_degrees[:, 0] == vert)][0] for vert in nodes]
-    other_end = max(vn_weight, key=lambda x: x[1])
-  
-    edge = G.edge(other_end[0], top[0])
-    if edge is None:
-        edge = G.edge(top[0], other_end[0]) 
-    return [top[0], other_end[0]], neighbours, top[0]
-
+   
 def FBF_recursive(G, tree_nodes, weight_attr, node_degrees, neighbours, lastAdded = None, node_int_degrees = None):  
     # pick a neightbour Vn+1 with a highest degree
  
@@ -78,13 +45,8 @@ def FBF_recursive(G, tree_nodes, weight_attr, node_degrees, neighbours, lastAdde
     if len(neighbours ) == 0 :
         neighbours = new_neighbours
     else:
-        neighbours = np.append(neighbours, new_neighbours, axis=0)  
-            
-    # neighbours of nodes that are already in tree
-    #neighbours = [x for x in neighbours if x[0] not in tree_nodes]  
-    # neighbours = np.delete(neighbours, np.isin(neighbours[:,0].astype(int),tree_nodes))
-    #neighbours = list(set(neighbours))  
-     
+        neighbours = np.append(neighbours, new_neighbours, axis=0)   
+        
     # neighbours with the highest degree 
     top = max(neighbours, key=lambda x: x[1])
 

@@ -42,14 +42,36 @@ def save_json_file(data, file_name):
     with open(file_name, 'w') as outfile:
         json.dump(data, outfile)
 
+def save_graph(original_file_name, graphs, edge_percentages, alg_name):
+    for x in range(0, len(edge_percentages)):
+        p = str(edge_percentages[x])
+        p = p.replace(".", "-")
+        file_name = original_file_name.replace('.graphml', '_')
+        file_name = file_name + p + "_gt_" + alg_name+ '.graphml'
+        print(file_name)
+        graphs[x].save(file_name, fmt='graphml') 
+
+def run_tests_save_graph(graph, file_name, data, weight_attr):
+    edge_percentages = [1, 0.8, 0.5] 
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2, graphs_BC = sampling.edge_reduction_graph_tool.edge_reduce_approximate_test_with_graph(graph, edge_percentages, weight_attr)
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3, graphs_FF = sampling.focus_filtering_graph_tool.run_focus_test_with_graphs(graph, edge_percentages, weight_attr)
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1, graphs_WIS = sampling.WIS_graph_tool.WIS_test_with_graph(graph, edge_percentages, weight_attr)
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4, graphs_SRS2 = sampling.SRS2_graph_tool.SRS2_test_with_graphs(file_name, graph.copy(), edge_percentages, weight_attr)
+     
+    save_graph(file_name, graphs_WIS, edge_percentages, "WIS")
+    save_graph(file_name, graphs_SRS2, edge_percentages, "SRS2")
+    save_graph(file_name, graphs_FF, edge_percentages, "FF")
+    save_graph(file_name, graphs_BC, edge_percentages, "BC")
+
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.7, 0.4] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
-    edge_percentages = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
-  
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
+    #edge_percentages = [ 0.5] 
+
     edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     
@@ -60,7 +82,7 @@ def run_tests(graph, file_name, data, weight_attr):
         edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4)
     
     file_name = file_name.replace(".graphml", ".json")
-    file_name = "test_output_" + file_name
+    file_name = "test_gt_output_" + file_name
 
     save_json_file(data, file_name)
 
@@ -78,6 +100,17 @@ def run_tests_for_files_in_folder(d, weight_attr):
             data = run_tests(G, file, data, weight_attr)
 
     save_json(data)
+
+def run_tests_for_files_in_folder_save_graphs(d, weight_attr):
+    #subfolders = [f.path for f in os.scandir(d) if f.is_dir() ] 
+    
+    data = {}
+    for file in os.listdir(d):  
+        print(file) 
+        print(os.path.isfile(file))
+        if file.endswith(".graphml"):  
+            G = load_g(os.path.join(d, file))  
+            run_tests_save_graph(G, file, data, weight_attr) 
 
 def run_FF_test(graph, file_name, data, weight_attr): 
     #edge_percentages = [0.7]
@@ -223,21 +256,17 @@ def write_json_output(file_name, data, graph,
 
     return data
 
-weight_attr = "lastTs" 
-g = load_g("test_caveman_8_50.graphml")
+weight_attr = "lastTs"
+ 
+#g = load_g("test_caveman_2_5.graphml")
 #run_tests_for_files_in_folder("test_data_2", weight_attr)
-run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
+run_tests_for_files_in_folder_save_graphs("test_data", weight_attr)
+#run_tests(g, "test_caveman_2_5.graphml", {}, weight_attr)
 #run_FF_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_WIS_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_tests_for_files_in_folder("test_data", weight_attr)
  
-#print(g.get_edges())
-c = []
-a = [(1, 0.3, 0.1), (0.08, 0.06, 0.03)] 
-b = [(1, 0.3, 0.1), (0.08, 0.06, 0.03), (0.08, 0.06, 0.03)] 
-
-c = a
-c = np.append(c, b, axis=0)
+#print(g.get_edges()) 
 
 #g = load_g("9037-12bbf821.graphml")
 #run_tests(g, "9037-12bbf821.graphml", {}, weight_attr)
@@ -250,89 +279,3 @@ c = np.append(c, b, axis=0)
  
 #g = load_g("huge.graphml")
 #run_tests(g, "hug.graphml", {}, weight_attr)
-
-def load_test_graph(): 
-    # We want also to keep the age information for each vertex and edge. For that
-    # let's create some property maps
-    v_age = g.new_vertex_property("int")
-    e_age = g.new_edge_property("int")
-
-    # The final size of the network
-    N = 100000
-
-    # We have to start with one vertex
-    v = g.add_vertex()
-    v_age[v] = 0
-
-    # we will keep a list of the vertices. The number of times a vertex is in this
-    # list will give the probability of it being selected.
-    vlist = [v]
-
-    # let's now add the new edges and vertices
-    for i in range(1, N):
-        # create our new vertex
-        v = g.add_vertex()
-        v_age[v] = i
-
-        # we need to sample a new vertex to be the target, based on its in-degree +
-        # 1. For that, we simply randomly sample it from vlist.
-        i = randint(0, len(vlist))
-        target = vlist[i]
-
-        # add edge
-        e = g.add_edge(v, target)
-        e_age[e] = i
-
-        # put v and target in the list
-        vlist.append(target)
-        vlist.append(v)
-
-    # now we have a graph!
-
-    # let's do a random walk on the graph and print the age of the vertices we find,
-    # just for fun.
-
-    v = g.vertex(randint(0, g.num_vertices()))
-    while True:
-        print("vertex:", int(v), "in-degree:", v.in_degree(), "out-degree:",
-            v.out_degree(), "age:", v_age[v])
-
-        if v.out_degree() == 0:
-            print("Nowhere else to go... We found the main hub!")
-            break
-
-        n_list = []
-        for w in v.out_neighbors():
-            n_list.append(w)
-        v = n_list[randint(0, len(n_list))]
-
-    # let's save our graph for posterity. We want to save the age properties as
-    # well... To do this, they must become "internal" properties:
-
-    g.vertex_properties["age"] = v_age
-    g.edge_properties["age"] = e_age
-
-    # now we can save it
-    g.save("price.xml.gz")
-
-
-    # Let's plot its in-degree distribution
-    in_hist = graph_tool.stats.vertex_hist(g, "in")
-
-    y = in_hist[0]
-    err = np.sqrt(in_hist[0])
-    err[err >= y] = y[err >= y] - 1e-2
-
-    figure(figsize=(6,4))
-    errorbar(in_hist[1][:-1], in_hist[0], fmt="o", yerr=err,
-            label="in")
-    gca().set_yscale("log")
-    gca().set_xscale("log")
-    gca().set_ylim(1e-1, 1e5)
-    gca().set_xlim(0.8, 1e3)
-    subplots_adjust(left=0.2, bottom=0.2)
-    xlabel("$k_{in}$")
-    ylabel("$NP(k_{in})$")
-    tight_layout()
-    #savefig("price-deg-dist.pdf")
-    #savefig("price-deg-dist.svg")

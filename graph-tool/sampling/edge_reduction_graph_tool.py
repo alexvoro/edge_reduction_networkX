@@ -14,13 +14,13 @@ def remove_edges(G_reduced, e_delete, items, edges_max_goal):
     sorted_bet_cent_edges = G_reduced.get_edges()[sorted_bet_cent_edges_ind]
   
     time_spent = time.time()-current_time  
-    print("sorting took:", time.time()-current_time)
+    #print("sorting took:", time.time()-current_time)
     goal_num = G_reduced.num_edges() - edges_max_goal
     degrees_ = np.sum([G_reduced.get_in_degrees(G_reduced.get_vertices()), G_reduced.get_out_degrees(G_reduced.get_vertices()) ], axis=0)
         
     for bet_cent in sorted_bet_cent_edges:  
         if (len(removed_edges) >= goal_num):
-            print("done :", G_reduced.num_edges())
+            #print("done :", G_reduced.num_edges())
             break
             
         if(degrees_[bet_cent[0]] > 2 and degrees_[bet_cent[1]] > 2 ) :
@@ -33,7 +33,7 @@ def remove_edges(G_reduced, e_delete, items, edges_max_goal):
             removed_edges.append(bet_cent) 
 
     time_spent = time.time()-current_time
-    print("for loop took : ", time_spent)
+    #print("for loop took : ", time_spent)
     current_time = time.time()
 
     return G_reduced, removed_edges
@@ -69,7 +69,7 @@ def get_in_degree(G):
 def get_out_degree(G): 
     return (sum(G.get_out_degrees(G.get_vertices())/float(G.num_vertices())))
 
-def postprocess(G, G_reduced, e_delete, items): 
+def postprocess(G, G_reduced, e_delete, removed_edges): 
     c = label_components(G_reduced, directed=False)[0]
     number_wcc = len(set(c))
 
@@ -79,7 +79,7 @@ def postprocess(G, G_reduced, e_delete, items):
     current_time = time.time()  
     print("number of disconnected components before postprocessing:", number_wcc)
     
-    for edge in reversed(items):
+    for edge in reversed(removed_edges):
         if number_wcc == 1: 
             break
         if c[edge[0]] != c[edge[1]] : 
@@ -100,6 +100,7 @@ def postprocess(G, G_reduced, e_delete, items):
  
 def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):
     edge_weight = G_reduced.edge_properties[weight_attr]
+    #print(G_reduced.get_edges())
     t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
 
     total_weight.append(t_weight) 
@@ -120,7 +121,7 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
     nodes_rand = np.random.choice(G.num_vertices(), take_count)
     edge_weight = G.edge_properties[weight_attr]
 
-    cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=edge_weight, norm=True)
+    cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], weight=edge_weight)
     bet_cent_edges = cent[1]  
 
     total_weight = []
@@ -173,19 +174,19 @@ def edge_reduce_approximate_test_with_graph(G, edge_cuts, weight_attr='transferr
     for edge_cut in edge_cuts:  
         current_time = time.time()
         edges_max_goal = G.num_edges() * edge_cut 
-        print("original:", G.num_edges())
+        #print("original:", G.num_edges())
         G_reduced = run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr) 
 
         time_spent = time.time()-current_time 
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
 
-        print("num edges: ", G_reduced.num_edges())  
+        #print("num edges: ", G_reduced.num_edges())  
         #print("weight: ", G_reduced.size())
         #print("weight: ", G_reduced.size(weight=weight_attr)) 
 
         graphs.append(Graph(G_reduced, prune=True))
-        print("weight: ", G_reduced.size())
-        print("weight: ", G_reduced.size(weight=weight_attr)) 
+        #print("weight: ", G_reduced.size())
+        #print("weight: ", G_reduced.size(weight=weight_attr)) 
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
 

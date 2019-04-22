@@ -11,7 +11,7 @@ import json
 import time
 seed(42)
 import sampling
-from sampling import WIS_graph_tool, edge_reduction_graph_tool, extensions, focus_filtering_graph_tool, SRS2_graph_tool
+from sampling import WIS_graph_tool, edge_reduction_graph_tool, focus_filtering_graph_tool, SRS2_graph_tool
  
 def weakly_connected_components(G): 
     seen = set()
@@ -56,22 +56,18 @@ def load_g(file_name):
     graph = load_graph(file_name)
     print("num_vertices", graph.num_vertices())
     print("num_edges", graph.num_edges())
-    print("weakly_connected_components", extensions.number_weakly_connected_components(graph))
-    max_component = max(extensions.weakly_connected_components(graph), key=len)
+    print("weakly_connected_components", len(label_components(graph, directed=False)[1])) 
+      
+    if len(label_components(graph, directed=False)[1]) != 1:
+        c = label_largest_component(graph) 
+        largest_component = GraphView(graph, vfilt=c) 
+        g_largest_component = Graph(largest_component, prune=True)
+        print("num_vertices", g_largest_component.num_vertices())
+        print("num_edges", g_largest_component.num_edges()) 
 
-    graph_largest_component = GraphView(graph, vfilt=lambda v: v in max_component)
-    print("num_vertices", graph_largest_component.num_vertices())
-    print("num_edges", graph_largest_component.num_edges())
-    #tt = graph_tool.topology.label_largest_component(graph)
-
-    #u = graph_tool.GraphView(graph, vfilt=tt)   # extract the largest component as a graph
-    #print(u.num_vertices())
-
-    #g = graph_tool.GraphView(graph, vfilt=graph_tool.topology.label_largest_component(graph))
-    #print("num_vertices", g.num_vertices())
-    #print("num_edges", g.num_edges())
-
-    return graph_largest_component
+        return g_largest_component
+    else:
+        return graph
 
 def save_json(data): 
     print("data", data)
@@ -102,7 +98,7 @@ def run_tests(graph, file_name, data, weight_attr):
         edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4)
     
     file_name = file_name.replace(".graphml", ".json")
-    file_name = "test_output_" + file_name
+    file_name = "test_gt_output_small_" + file_name
 
     save_json_file(data, file_name)
 

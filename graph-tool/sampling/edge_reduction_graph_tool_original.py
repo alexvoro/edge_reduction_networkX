@@ -46,34 +46,34 @@ def _plain_bfs(G, source):
                 seen.add(v)
                 nextlevel.update(v.in_neighbors())
                 nextlevel.update(v.out_neighbors())
-  
+
 def remove_edges(G_reduced, e_delete, items, edges_max_goal):
     current_time = time.time()
     removed_edges = []
-    
+    #sorted_bet_cent_edges = sorted(items,reverse=False) 
     sorted_bet_cent_edges_ind = np.argsort(items.a, axis=None)
     sorted_bet_cent_edges_ind = np.unravel_index(np.argsort(items.a, axis=None), items.a.shape)
     sorted_bet_cent_edges = G_reduced.get_edges()[sorted_bet_cent_edges_ind]
   
-    time_spent = time.time()-current_time  
+    time_spent = time.time()-current_time 
+ 
+    #print("count :", len(list(sorted_bet_cent_edges)))
     print("sorting took:", time.time()-current_time)
-    goal_num = G_reduced.num_edges() - edges_max_goal
-    degrees_ = np.sum([G_reduced.get_in_degrees(G_reduced.get_vertices()), G_reduced.get_out_degrees(G_reduced.get_vertices()) ], axis=0)
-        
+ 
     for bet_cent in sorted_bet_cent_edges:  
-        if (len(removed_edges) >= goal_num):
+        if (G_reduced.num_edges() <= edges_max_goal):
             print("done :", G_reduced.num_edges())
             break
-            
-        
-        if(degrees_[bet_cent[0]] > 2 and degrees_[bet_cent[1]] > 2 ) :
-            e_delete[G_reduced.edge(bet_cent[0], bet_cent[1])] = False
-            
-            G_reduced.set_edge_filter(e_delete)
-            degrees_[bet_cent[0]] = degrees_[bet_cent[0]] - 1
-            degrees_[bet_cent[1]] = degrees_[bet_cent[1]] - 1
-
-            removed_edges.append(bet_cent) 
+        #ttt = G_reduced.has_node(bet_cent[0])
+        v0 = G_reduced.vertex(bet_cent[0])
+        v1 = G_reduced.vertex(bet_cent[1])
+        #if(len(list(v0.all_edges())) > 2 and len(list(v1.all_edges())) > 2) :
+        e_delete[G_reduced.edge(bet_cent[0], bet_cent[1])] = False
+        #print("before  ", G_reduced.num_edges()) 
+        G_reduced.set_edge_filter(e_delete)
+        #print("after  ", G_reduced.num_edges())
+        # G_reduced.remove_edge(G_reduced.edge(bet_cent[0],bet_cent[1]))
+        removed_edges.append(bet_cent) 
 
     time_spent = time.time()-current_time
     print("for loop took : ", time_spent)
@@ -85,7 +85,6 @@ def run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr):
     graph = Graph(G)
     e_delete = graph.new_edge_property("bool", True) 
     G_reduced, removed_edges = remove_edges(graph, e_delete, bet_cent_edges, edges_max_goal) 
-    
     G_reduced = postprocess(G, G_reduced, e_delete, removed_edges)
 
     return G_reduced 
@@ -112,33 +111,34 @@ def get_in_degree(G):
 def get_out_degree(G): 
     return (sum(G.get_out_degrees(G.get_vertices())/float(G.num_vertices())))
 
-def postprocess(G, G_reduced, e_delete, items): 
-    c = label_components(G_reduced, directed=False)[0]
-    number_wcc = len(set(c))
-
+def postprocess(G, G_reduced, e_delete, items):
+    _components = [c for c in weakly_connected_components(G_reduced)]
+    number_wcc = len(_components)
     if number_wcc == 1: 
         return G_reduced
-  
+
     current_time = time.time()  
     print("number of disconnected components before postprocessing:", number_wcc)
     
     for edge in reversed(items):
         if number_wcc == 1: 
             break
-        if c[edge[0]] != c[edge[1]] : 
-            # edge is connecting two components  
-            original_edge = G.edge(edge[0], edge[1]) 
+            
+        for c in _components:
+            if edge[0] in c and edge[1] in c :
+                # edge is within one component
+                break
+            elif edge[0] in c or edge[1] in c : 
+                # edge is connecting two components  
+                original_edge = G.edge(edge[0], edge[1]) 
 
-            # add back the edge 
-            e_delete[original_edge] = True 
-            G_reduced.set_edge_filter(e_delete)
-                
-            c = label_components(G_reduced, directed=False)[0]   
-        
-            number_wcc = len(set(c))  
-            break 
+                # add back the edge 
+                e_delete[original_edge] = True 
+                G_reduced.set_edge_filter(e_delete)
+                _components = [c for c in weakly_connected_components(G_reduced)]
+                number_wcc = len(_components)  
+                break
 
-    print("postprocessing took:", time.time()  - current_time)
     return G_reduced  
  
 def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):

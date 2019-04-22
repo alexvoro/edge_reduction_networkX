@@ -177,6 +177,6 @@ def edge_reduce_approximate_test(G, edge_cuts, weight_attr='transferred'):
         #print("weight: ", G_reduced.size())
         #print("weight: ", G_reduced.size(weight=weight_attr)) 
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, []
 
  

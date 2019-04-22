@@ -62,14 +62,16 @@ def load_g(file_name):
     graph_largest_component = GraphView(graph, vfilt=lambda v: v in max_component)
     print("num_vertices", graph_largest_component.num_vertices())
     print("num_edges", graph_largest_component.num_edges())
- 
-    c = label_largest_component(graph) 
-    largest_component = GraphView(graph, vfilt=c) 
-    g_largest_component = Graph(largest_component, prune=True)
-    print("num_vertices", g_largest_component.num_vertices())
-    print("num_edges", g_largest_component.num_edges()) 
+    #tt = graph_tool.topology.label_largest_component(graph)
 
-    return g_largest_component
+    #u = graph_tool.GraphView(graph, vfilt=tt)   # extract the largest component as a graph
+    #print(u.num_vertices())
+
+    #g = graph_tool.GraphView(graph, vfilt=graph_tool.topology.label_largest_component(graph))
+    #print("num_vertices", g.num_vertices())
+    #print("num_edges", g.num_edges())
+
+    return graph_largest_component
 
 def save_json(data): 
     print("data", data)
@@ -86,13 +88,12 @@ def save_json_file(data, file_name):
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.7, 0.4] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
-    #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
-    edge_percentages = [0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
+    edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
   
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
-    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     
     data = write_json_output(file_name, data, graph,
         edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2,
@@ -270,18 +271,12 @@ weight_attr = "lastTs"
 #run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_FF_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_WIS_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
-#run_tests_for_files_in_folder("test_data", weight_attr)
+run_tests_for_files_in_folder("test_data_2", weight_attr)
  
 #print(g.get_edges())
-c = []
-a = [(1, 0.3, 0.1), (0.08, 0.06, 0.03)] 
-b = [(1, 0.3, 0.1), (0.08, 0.06, 0.03), (0.08, 0.06, 0.03)] 
 
-c = a
-c = np.append(c, b, axis=0)
-
-g = load_g("9037-12bbf821.graphml")
-run_tests(g, "9037-12bbf821.graphml", {}, weight_attr)
+#g = load_g("9101-1383f38c.graphml")
+#run_tests(g, "9101-1383f38c.graphml", {}, weight_attr)
 
 #g = load_g("9101-12bbf821.graphml")
 #run_tests(g, "9101-12bbf821.graphml", {}, weight_attr)

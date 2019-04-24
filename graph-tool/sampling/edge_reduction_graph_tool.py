@@ -154,11 +154,11 @@ def edge_reduce_approximate_graph(G, edge_cuts, weight_attr='transferred'):
     nodes_rand = np.random.choice(G.num_vertices(), take_count)
     edge_weight = G.edge_properties[weight_attr]
 
+    graphs = []
     cent = graph_tool.centrality.betweenness(G, pivots=G.get_vertices()[nodes_rand], vprop=None, eprop=None, weight=edge_weight, norm=True)
     bet_cent_edges = cent[1]   
 
     for edge_cut in edge_cuts:  
-        current_time = time.time()
         edges_max_goal = G.num_edges() * edge_cut  
         G_reduced = run_edge_reduce(G, bet_cent_edges, edges_max_goal, weight_attr)
         graphs.append(Graph(G_reduced, prune=True)) 

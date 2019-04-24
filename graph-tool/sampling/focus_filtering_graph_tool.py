@@ -197,22 +197,14 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
         time_spent = time.time()-current_time
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
 
-        graphs.append(G_reduced)
+        graphs.append(Graph(G_reduced, prune=True)) 
         G_reduced.clear_filters()
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
 
  
 def focus_filtering_graphs(G, edge_cuts, weight_attr='transferred'): 
-    G_r = G
-    total_weight = [] 
-    in_degree = []
-    out_degree = []
-    average_clustering = []
-    nn = []
-    ne = []
-    wcc = []
-    running_time = []
+    G_r = G 
     graphs = []
 
     root, nodes_degrees = selectRoot(G_r, weight_attr)
@@ -221,7 +213,8 @@ def focus_filtering_graphs(G, edge_cuts, weight_attr='transferred'):
         threshold = G.num_edges() * edge_cut
         G_reduced = FBF(G, weight_attr, root, threshold, nodes_degrees) 
         
-        graphs.append(G_reduced)
+        print("edges: ", G_reduced.num_edges())
+        graphs.append(Graph(G_reduced, prune=True)) 
         G_reduced.clear_filters()
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
+    return graphs

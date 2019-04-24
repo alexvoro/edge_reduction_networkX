@@ -64,16 +64,16 @@ def run_tests_save_graph(graph, file_name, data, weight_attr):
     save_graph(file_name, graphs_BC, edge_percentages, "BC")
 
 def run_save_graph(graph, file_name, data, weight_attr):
-    edge_percentages = [0.07, 0.05, 0.02] 
-    graphs_BC = sampling.edge_reduction_graph_tool.edge_reduce_approximate_graph(graph, edge_percentages, weight_attr)
+    edge_percentages = [0.2, 0.08] 
     graphs_FF = sampling.focus_filtering_graph_tool.focus_filtering_graphs(graph, edge_percentages, weight_attr)
-    graphs_WIS = sampling.WIS_graph_tool.WIS_graph(graph, edge_percentages, weight_attr)
-    graphs_SRS2 = sampling.SRS2_graph_tool.SRS2_graphs(file_name, graph.copy(), edge_percentages, weight_attr)
+    #graphs_BC = sampling.edge_reduction_graph_tool.edge_reduce_approximate_graph(graph, edge_percentages, weight_attr)
+    #graphs_WIS = sampling.WIS_graph_tool.WIS_graph(graph, edge_percentages, weight_attr)
+    #graphs_SRS2 = sampling.SRS2_graph_tool.SRS2_graphs(file_name, graph.copy(), edge_percentages, weight_attr)
      
-    save_graph(file_name, graphs_WIS, edge_percentages, "WIS")
-    save_graph(file_name, graphs_SRS2, edge_percentages, "SRS2")
+    #save_graph(file_name, graphs_WIS, edge_percentages, "WIS")
+    #save_graph(file_name, graphs_SRS2, edge_percentages, "SRS2")
     save_graph(file_name, graphs_FF, edge_percentages, "FF")
-    save_graph(file_name, graphs_BC, edge_percentages, "BC")
+    #save_graph(file_name, graphs_BC, edge_percentages, "BC")
  
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.7, 0.4] 

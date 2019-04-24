@@ -26,7 +26,7 @@ def get_in_degree(G):
 def get_out_degree(G): 
     return (sum(G.get_out_degrees(G.get_vertices())/float(G.num_vertices())))
 
-def run_SRS2_test(G, edges_max_goal, weight_attr):  
+def run_SRS2(G, edges_max_goal, weight_attr):  
     e_delete = G.new_edge_property("bool", True) 
     G_reduced = SRS2(G, e_delete, weight_attr, edges_max_goal)
     return G_reduced
@@ -61,7 +61,7 @@ def SRS2_test(filename, G, edge_cuts, weight_attr):
         edges_max_goal = G.num_edges() * edge_cut 
         
         current_time = time.time() 
-        G_reduced = run_SRS2_test(G, edges_max_goal, weight_attr) 
+        G_reduced = run_SRS2(G, edges_max_goal, weight_attr) 
         time_spent = time.time()-current_time
 
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
@@ -85,7 +85,7 @@ def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):
         edges_max_goal = G.num_edges() * edge_cut 
         
         current_time = time.time() 
-        G_reduced = run_SRS2_test(G, edges_max_goal, weight_attr) 
+        G_reduced = run_SRS2(G, edges_max_goal, weight_attr) 
         time_spent = time.time()-current_time
 
         total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
@@ -94,5 +94,17 @@ def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):
         G_reduced.clear_filters()
 
     return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
+
+ 
+def SRS2_graphs(filename, G, edge_cuts, weight_attr='transferred'):  
+    graphs = []
+
+    for edge_cut in edge_cuts:  
+        edges_max_goal = G.num_edges() * edge_cut  
+        G_reduced = run_SRS2(G, edges_max_goal, weight_attr) 
+        graphs.append(Graph(G_reduced, prune=True))
+        G_reduced.clear_filters()
+
+    return graphs
 
  

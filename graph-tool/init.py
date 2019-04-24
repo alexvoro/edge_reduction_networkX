@@ -52,7 +52,7 @@ def save_graph(original_file_name, graphs, edge_percentages, alg_name):
         graphs[x].save(file_name, fmt='graphml') 
 
 def run_tests_save_graph(graph, file_name, data, weight_attr):
-    edge_percentages = [1, 0.8, 0.5] 
+    edge_percentages = [0.07, 0.05, 0.02] 
     edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2, graphs_BC = sampling.edge_reduction_graph_tool.edge_reduce_approximate_test_with_graph(graph, edge_percentages, weight_attr)
     edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3, graphs_FF = sampling.focus_filtering_graph_tool.run_focus_test_with_graphs(graph, edge_percentages, weight_attr)
     edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1, graphs_WIS = sampling.WIS_graph_tool.WIS_test_with_graph(graph, edge_percentages, weight_attr)
@@ -63,16 +63,30 @@ def run_tests_save_graph(graph, file_name, data, weight_attr):
     save_graph(file_name, graphs_FF, edge_percentages, "FF")
     save_graph(file_name, graphs_BC, edge_percentages, "BC")
 
+def run_save_graph(graph, file_name, data, weight_attr):
+    edge_percentages = [0.07, 0.05, 0.02] 
+    graphs_BC = sampling.edge_reduction_graph_tool.edge_reduce_approximate_graph(graph, edge_percentages, weight_attr)
+    graphs_FF = sampling.focus_filtering_graph_tool.focus_filtering_graphs(graph, edge_percentages, weight_attr)
+    graphs_WIS = sampling.WIS_graph_tool.WIS_graph(graph, edge_percentages, weight_attr)
+    graphs_SRS2 = sampling.SRS2_graph_tool.SRS2_graphs(file_name, graph.copy(), edge_percentages, weight_attr)
+     
+    save_graph(file_name, graphs_WIS, edge_percentages, "WIS")
+    save_graph(file_name, graphs_SRS2, edge_percentages, "SRS2")
+    save_graph(file_name, graphs_FF, edge_percentages, "FF")
+    save_graph(file_name, graphs_BC, edge_percentages, "BC")
+ 
 def run_tests(graph, file_name, data, weight_attr): 
     #edge_percentages = [1, 0.7, 0.4] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
     edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
-    #edge_percentages = [ 0.5] 
+    #edge_percentages = [0.5] 
 
-    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
+    
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
+    
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
     edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
     
     data = write_json_output(file_name, data, graph,
@@ -101,46 +115,14 @@ def run_tests_for_files_in_folder(d, weight_attr):
 
     save_json(data)
 
-def run_tests_for_files_in_folder_save_graphs(d, weight_attr):
-    #subfolders = [f.path for f in os.scandir(d) if f.is_dir() ] 
-    
+def run_tests_for_files_in_folder_save_graphs(d, weight_attr): 
     data = {}
     for file in os.listdir(d):  
         print(file) 
         print(os.path.isfile(file))
         if file.endswith(".graphml"):  
             G = load_g(os.path.join(d, file))  
-            run_tests_save_graph(G, file, data, weight_attr) 
-
-def run_FF_test(graph, file_name, data, weight_attr): 
-    #edge_percentages = [0.7]
-    #edge_percentages = [0.3, 0.1, 0.08, 0.06]  
-    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01] 
-    current_time = time.time()
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time  = sampling.focus_filtering_graph_tool.run_focus_test(graph, edge_percentages, weight_attr, True)
-    print("new  took:", time.time()-current_time)  
-    print(total_weight_3)
-
-    current_time = time.time()
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time  = sampling.focus_filtering_graph_tool.run_focus_test(graph, edge_percentages, weight_attr)
-    print("old  took:", time.time()-current_time)  
-    print(total_weight_3)
- 
-    #save_json(data)
- 
-def run_WIS_test(graph, file_name, data, weight_attr): 
-    #edge_percentages = [1, 0.7, 0.4]
-    edge_percentages = [1, 0.3, 0.1, 0.08, 0.06, 0.03, 0.01] 
-    current_time = time.time()
-    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1 = sampling.WIS_graph_tool.WIS_test(graph, edge_percentages, weight_attr)
-    print("edge_cuts_WIS", edge_cuts_1)
-    print("total_weight_WIS", total_weight_1) 
-    print("wcc_WIS", wcc1)    
-    print("in_degree_WIS", in_degree1)
-    print("out_degree_WIS", out_degree1)
-    print("average_clustering1", average_clustering1)
-    print("nn1", nn1)
-    print("ne1", ne1)
+            run_save_graph(G, file, data, weight_attr)
 
 def run_BC(edge_percentages, graph, file_name, data, weight_attr):
     print("BC")
@@ -258,12 +240,13 @@ def write_json_output(file_name, data, graph,
 
 weight_attr = "lastTs"
  
-#g = load_g("test_caveman_2_5.graphml")
+#g = load_g("test_caveman_8_50.graphml")
 #run_tests_for_files_in_folder("test_data_2", weight_attr)
-run_tests_for_files_in_folder_save_graphs("test_data", weight_attr)
-#run_tests(g, "test_caveman_2_5.graphml", {}, weight_attr)
+#run_tests_for_files_in_folder("test_data", weight_attr)
+#run_tests(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_FF_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
 #run_WIS_test(g, "test_caveman_8_50.graphml", {}, weight_attr)
+run_tests_for_files_in_folder_save_graphs("test_data_graphs", weight_attr)
 #run_tests_for_files_in_folder("test_data", weight_attr)
  
 #print(g.get_edges()) 

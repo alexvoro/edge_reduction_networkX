@@ -105,10 +105,10 @@ def FBF(G, weight_attr, root, threshold, node_degrees):
 
         tree_nodes.append(top)
         tree_edges.append(edge)
- 
-    #print("time_spent: ", time.time()-current_time)
+    
     for node in tree_nodes:
         v_delete[G.vertex(node)] = True
+
     for edge in tree_edges:
         e_delete[edge] = True 
 
@@ -125,7 +125,7 @@ def get_in_degree(G):
 def get_out_degree(G): 
     return (sum(G.get_out_degrees(G.get_vertices())/float(G.num_vertices())))
 
-def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):
+def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity):
     edge_weight = G_reduced.edge_properties[weight_attr]
     t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
 
@@ -133,13 +133,14 @@ def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, avera
     in_degree.append(get_in_degree(G_reduced))
     out_degree.append(get_out_degree(G_reduced))
     running_time.append(time_spent)
-    #average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
-
+    average_clustering.append(graph_tool.clustering.global_clustering(G_reduced))
+    
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
     wcc.append(len(label_components(G_reduced, directed=False)[1])) 
-
-    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+    assortativity.append( graph_tool.correlations.assortativity(G_reduced, "total"))
+ 
+    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
 
 def run_focus_test(G, edge_cuts, weight_attr='transferred'): 
     total_weight = [] 
@@ -150,7 +151,9 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
     ne = []
     wcc = []
     running_time = []
- 
+    assortativity = []
+    sim = []
+    
     root, node_degrees = selectRoot(G, weight_attr)
     
     #print("root: ", root)
@@ -165,12 +168,17 @@ def run_focus_test(G, edge_cuts, weight_attr='transferred'):
         current_time = time.time() 
         G_reduced = FBF(G, weight_attr, root, threshold, node_degrees) 
         time_spent = time.time()-current_time
+
+        graph_reduced = Graph(G_reduced, prune=True)
+        sim.append(graph_tool.topology.similarity(G, graph_reduced))
+      
         #print("time_spent:", time_spent)
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity)
 
         G_reduced.clear_filters()
  
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+    print("<<<<<FF sim: ", sim)
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
 
 
 def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'): 
@@ -183,6 +191,7 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
     ne = []
     wcc = []
     running_time = []
+    assortativity = []
     graphs = []
 
     root, nodes_degrees = selectRoot(G_r, weight_attr)
@@ -195,7 +204,7 @@ def run_focus_test_with_graphs(G, edge_cuts, weight_attr='transferred'):
         current_time = time.time() 
         G_reduced = FBF(G, weight_attr, root, threshold, nodes_degrees) 
         time_spent = time.time()-current_time
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity)
 
         graphs.append(Graph(G_reduced, prune=True)) 
         G_reduced.clear_filters()

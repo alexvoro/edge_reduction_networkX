@@ -31,7 +31,7 @@ def run_SRS2(G, edges_max_goal, weight_attr):
     G_reduced = SRS2(G, e_delete, weight_attr, edges_max_goal)
     return G_reduced
  
-def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):
+def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity):
     edge_weight = G_reduced.edge_properties[weight_attr]
     t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
 
@@ -39,13 +39,14 @@ def get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, avera
     in_degree.append(get_in_degree(G_reduced))
     out_degree.append(get_out_degree(G_reduced))
     running_time.append(time_spent)
-    #average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
-
+    average_clustering.append(graph_tool.clustering.global_clustering(G_reduced))
+ 
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
     wcc.append(len(label_components(G_reduced, directed=False)[1])) 
+    assortativity.append( graph_tool.correlations.assortativity(G_reduced, "total"))
 
-    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+    return total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
  
 def SRS2_test(filename, G, edge_cuts, weight_attr): 
     total_weight = [] 
@@ -56,6 +57,8 @@ def SRS2_test(filename, G, edge_cuts, weight_attr):
     ne = []
     wcc = [] 
     running_time = [] 
+    assortativity = []
+    sim = []
 
     for edge_cut in edge_cuts:  
         edges_max_goal = G.num_edges() * edge_cut 
@@ -64,11 +67,14 @@ def SRS2_test(filename, G, edge_cuts, weight_attr):
         G_reduced = run_SRS2(G, edges_max_goal, weight_attr) 
         time_spent = time.time()-current_time
 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
- 
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity)
+        graph_reduced = Graph(G_reduced, prune=True)
+        sim.append(graph_tool.topology.similarity(G, graph_reduced))
+        
         G_reduced.clear_filters()
 
-    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+    print("<<<<<srs2 sim: ", sim)
+    return edge_cuts, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
 
 def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):   
     total_weight = [] 
@@ -80,6 +86,7 @@ def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):
     wcc = [] 
     running_time = []
     graphs = []
+    assortativity = []
 
     for edge_cut in edge_cuts:  
         edges_max_goal = G.num_edges() * edge_cut 
@@ -88,7 +95,7 @@ def SRS2_test_with_graphs(filename, G, edge_cuts, weight_attr='transferred'):
         G_reduced = run_SRS2(G, edges_max_goal, weight_attr) 
         time_spent = time.time()-current_time
 
-        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
+        total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity = get_stats(G_reduced, weight_attr, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity)
  
         graphs.append(Graph(G_reduced, prune=True))
         G_reduced.clear_filters()

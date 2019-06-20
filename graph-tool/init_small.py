@@ -72,7 +72,7 @@ def load_g(file_name):
 def save_json(data): 
     print("data", data)
     print("saving json")
-    with open('tests_gt__all_output.json', 'w') as outfile:
+    with open('tests_gt__all_output_05205.json', 'w') as outfile:
         json.dump(data, outfile)
 
 def save_json_file(data, file_name): 
@@ -86,16 +86,16 @@ def run_tests(graph, file_name, data, weight_attr):
     #edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1, 0.09, 0.08, 0.07, 0.06, 0.05, 0.04, 0.03, 0.02, 0.01] 
     edge_percentages = [1, 0.9, 0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1] 
   
-    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
-    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
-    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
-    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4, assortativity4 = run_SRS2(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2, assortativity2 = run_BC(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1, assortativity1 = run_WIS(edge_percentages, graph, file_name, {}, weight_attr)
+    edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3, assortativity3 = run_FF(edge_percentages, graph, file_name, {}, weight_attr)
     
     data = write_json_output(file_name, data, graph,
-        edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2,
-        edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1,
-        edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3,
-        edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4)
+        edge_cuts_2, total_weight_2, in_degree2, out_degree2, average_clustering2, nn2, ne2, wcc2, running_time2, assortativity2
+        edge_cuts_1, total_weight_1, in_degree1, out_degree1, average_clustering1, nn1, ne1, wcc1, running_time1, assortativity1
+        edge_cuts_3, total_weight_3, in_degree3, out_degree3, average_clustering3, nn3, ne3, wcc3, running_time3, assortativity3
+        edge_cuts_4, total_weight_4, in_degree4, out_degree4, average_clustering4, nn4, ne4, wcc4, running_time4, assortativity4)
     
     file_name = file_name.replace(".graphml", ".json")
     file_name = "test_gt_output_small_" + file_name

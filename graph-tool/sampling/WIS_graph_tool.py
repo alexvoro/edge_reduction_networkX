@@ -32,6 +32,7 @@ def WIS_reduce_test(graph, sizes, weight_attr):
     nn = []
     ne = []
     wcc = []
+    assortativity = []
 
     for size in sizes:
         print("size", size) 
@@ -49,12 +50,15 @@ def WIS_reduce_test(graph, sizes, weight_attr):
  
         actual_edge_cut = 1 - (graph.num_edges() - G_reduced.num_edges()) / graph.num_edges()
 
+        graph_reduced = Graph(G_reduced, prune=True)
+        sim.append(graph_tool.topology.similarity(graph, graph_reduced))
+     
         time_spent = time.time()-current_time
-        edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = get_stats(G_reduced, actual_edge_cut, weight_attr, edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent)
+        edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity = get_stats(G_reduced, actual_edge_cut, weight_attr, edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity)
 
-    return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+    return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
 
-def get_stats(G_reduced, actual_edge_cut, weight_attr, edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent):
+def get_stats(G_reduced, actual_edge_cut, weight_attr, edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, time_spent, assortativity):
     edge_weight = G_reduced.edge_properties[weight_attr]
     t_weight = sum(edge_weight[edge] for edge in G_reduced.edges())
 
@@ -63,13 +67,13 @@ def get_stats(G_reduced, actual_edge_cut, weight_attr, edge_cuts_percentage, tot
     in_degree.append(get_in_degree(G_reduced))
     out_degree.append(get_out_degree(G_reduced)) 
     running_time.append(time_spent)
-    #average_clustering.append(nx.average_clustering(G_reduced.to_undirected(as_view=True)))
-
+    average_clustering.append(graph_tool.clustering.global_clustering(G_reduced))
+    
     nn.append(G_reduced.num_vertices())
     ne.append(G_reduced.num_edges())
-    wcc.append(len(label_components(G_reduced, directed=False)[1]))
+    wcc.append(len(label_components(G_reduced, directed=False)[1])) 
 
-    return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
+    return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
  
 def get_in_degree(G): 
     if (G.num_vertices() == 0):
@@ -84,9 +88,8 @@ def get_out_degree(G):
 def WIS_test(G, edge_percentages, weight_attr='transferred'): 
     edge_cuts= [int(G.num_vertices() * x) for x in edge_percentages] 
     G_r = G.copy()
-    edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time = WIS_reduce_test(G_r, edge_cuts, weight_attr=weight_attr)
-    return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time
-
+    edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity = WIS_reduce_test(G_r, edge_cuts, weight_attr=weight_attr)
+    return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, assortativity
 
 def WIS_reduce_test_with_graphs(graph, sizes, weight_attr):   # weighted    
     n = graph.num_vertices()
@@ -110,6 +113,7 @@ def WIS_reduce_test_with_graphs(graph, sizes, weight_attr):   # weighted
     ne = []
     wcc = [] 
     graphs = []
+    sim = []
 
     for size in sizes:
         current_time = time.time() 
@@ -130,6 +134,7 @@ def WIS_reduce_test_with_graphs(graph, sizes, weight_attr):   # weighted
         graphs.append(Graph(G_reduced, prune=True))
         G_reduced.clear_filters()
         
+    print("<<<<<wis sim: ", sim)
     return edge_cuts_percentage, total_weight, in_degree, out_degree, average_clustering, nn, ne, wcc, running_time, graphs
 
 
@@ -160,6 +165,8 @@ def WIS_run(graph, sizes, weight_attr):   # weighted
             G_reduced.remove_vertex(v, fast=True)
   
         graphs.append(Graph(G_reduced, prune=True))
+        print("num_vertices", G_reduced.num_vertices())
+        print("num_edges", G_reduced.num_edges())
         G_reduced.clear_filters()
         
     return graphs
